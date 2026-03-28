@@ -1,0 +1,82 @@
+{
+  "placeholderImages": [
+    {
+      "id": "course-1",
+      "description": "A person coding on a laptop with multiple monitors.",
+      "imageUrl": "https://images.unsplash.com/photo-1542831371-29b0f74f9713?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxjb2Rpbmd8ZW58MHx8fHwxNzU5NTcxMTA0fDA&ixlib=rb-4.0.3&q=80&w=1080",
+      "imageHint": "coding laptop"
+    },
+    {
+      "id": "course-2",
+      "description": "A design team collaborating around a whiteboard with sticky notes.",
+      "imageUrl": "https://images.unsplash.com/photo-1552664730-d307ca884978?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxkZXNpZ24lMjBtZWV0aW5nfGVufDB8fHx8MTc1OTU3OTgwN3ww&ixlib=rb-4.0.3&q=80&w=1080",
+      "imageHint": "design meeting"
+    },
+    {
+      "id": "course-3",
+      "description": "A close-up of a person painting on a canvas in an art studio.",
+      "imageUrl": "https://images.unsplash.com/photo-1531913131405-85b286b62692?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxhcnQlMjBzdHVkaW98ZW58MHx8fHwxNzYxMDM4Mzg4fDA&ixlib=rb-4.0.3&q=80&w=1080",
+      "imageHint": "art canvas"
+    },
+    {
+      "id": "course-4",
+      "description": "A rocket launching into the sky, representing startups and innovation.",
+      "imageUrl": "https://images.unsplash.com/photo-1531297484001-80022131f5a1?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHx0ZWNobm9sb2d5fGVufDB8fHx8MTc2MTAzODA4MHww&ixlib=rb-4.0.3&q=80&w=1080",
+      "imageHint": "rocket launch"
+    },
+    {
+      "id": "course-5",
+      "description": "A person writing in a notebook at a coffee shop, focused on creative writing.",
+      "imageUrl": "https://images.unsplash.com/photo-1521791136064-7986c2920216?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxwcm9qZWN0JTIwbWFuYWdlbWVudHxlbnwwfHx8fDE3NTk1Nzk4MDh8MA&ixlib=rb-4.0.3&q=80&w=1080",
+      "imageHint": "writing notebook"
+    },
+    {
+      "id": "course-6",
+      "description": "A diverse group of people collaborating on a project in a modern office.",
+      "imageUrl": "https://images.unsplash.com/photo-1521737852567-6949f3f9f2b5?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHx0ZWFtJTIwY29sbGFib3JhdGlvbnxlbnwwfHx8fDE3NTk1NTgwNjh8MA&ixlib=rb-4.0.3&q=80&w=1080",
+      "imageHint": "team collaboration"
+    },
+    {
+      "id": "avatar-1",
+      "description": "Profile picture of a smiling man.",
+      "imageUrl": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxwb3J0cmFpdCUyMG1hbGV8ZW58MHx8fHwxNzYxMDM3NzEyfDA&ixlib=rb-4.0.3&q=80&w=1080",
+      "imageHint": "portrait male"
+    },
+    {
+      "id": "avatar-2",
+      "description": "Profile picture of a woman with glasses.",
+      "imageUrl": "https://images.unsplash.com/photo-1484863137850-59afcfe05386?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxwZXJzb24lMjBzbWlsaW5nfGVufDB8fHx8MTc1OTU0MTgzMnww&ixlib=rb-4.0.3&q=80&w=1080",
+      "imageHint": "person smiling"
+    },
+    {
+      "id": "avatar-3",
+      "description": "Profile picture of a person in a professional setting.",
+      "imageUrl": "https://images.unsplash.com/photo-1581403341630-a6e0b9d2d257?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHx3b21hbiUyMHByb2ZpbGV8ZW58MHx8fHwxNzU5NTA3NDkwfDA&ixlib=rb-4.0.3&q=80&w=1080",
+      "imageHint": "woman profile"
+    },
+    {
+      "id": "hero-background",
+      "description": "Abstract network of glowing lines and nodes.",
+      "imageUrl": "https://images.unsplash.com/photo-1531297484001-80022131f5a1?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHx0ZWNobm9sb2d5fGVufDB8fHx8MTc2MTAzODA4MHww&ixlib=rb-4.0.3&q=80&w=1080",
+      "imageHint": "technology abstract"
+    },
+    {
+      "id": "hero-cad",
+      "description": "Students working on professional 3D CAD design for engineering projects.",
+      "imageUrl": "https://images.unsplash.com/photo-1581092160562-40aa08e78837?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxjYWQlMjBkZXNpZ258ZW58MHx8fHwxNzYxMDM4Nzg4fDA&ixlib=rb-4.0.3&q=80&w=1080",
+      "imageHint": "cad design"
+    },
+    {
+      "id": "hero-robotics",
+      "description": "A high-tech electronic robotic car being assembled and tested.",
+      "imageUrl": "https://images.unsplash.com/photo-1531746790731-6c087fecd05a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxyb2JvdGljJTIwY2FyfGVufDB8fHx8MTc2MTAzODc4OHww&ixlib=rb-4.0.3&q=80&w=1080",
+      "imageHint": "robotic car"
+    },
+    {
+      "id": "lesson-video-placeholder",
+      "description": "A placeholder image for a video lesson.",
+      "imageUrl": "https://images.unsplash.com/photo-1554224155-8d044b5a2b7a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxwcmVzZW50YXRpb258ZW58MHx8fHwxNzYxMDM4NjMwfDA&ixlib=rb-4.0.3&q=80&w=1080",
+      "imageHint": "presentation screen"
+    }
+  ]
+}

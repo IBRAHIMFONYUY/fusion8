@@ -1,0 +1,89 @@
+
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "Base profile for all users. Roles: student, teacher, admin.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "role": { "type": "string", "enum": ["student", "teacher", "admin"] },
+        "displayName": { "type": "string" },
+        "photoURL": { "type": "string" },
+        "approved": { "type": "boolean", "description": "Mandatory for teachers to publish." },
+        "matricule": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "email", "role"]
+    },
+    "CohortApplication": {
+      "title": "Cohort Application",
+      "description": "Student application for the Onsite Accelerator.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "studentId": { "type": "string" },
+        "fullName": { "type": "string" },
+        "email": { "type": "string" },
+        "projectIdea": { "type": "string" },
+        "reason": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending", "approved", "rejected"] },
+        "appliedAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "Course": {
+      "title": "Course",
+      "description": "Educational content created by teachers.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "teacherId": { "type": "string" },
+        "price": { "type": "number" },
+        "thumbnail": { "type": "string" },
+        "status": { "type": "string", "enum": ["draft", "pending", "approved", "published"] },
+        "enrolledCount": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "title", "teacherId", "status"]
+    },
+    "Project": {
+      "title": "Project",
+      "description": "Collaborative engineering venture.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "status": { "type": "string", "enum": ["recruiting", "in_progress", "completed"] },
+        "members": { "type": "object", "description": "Map of UID to role" },
+        "skillsNeeded": { "type": "array", "items": { "type": "string" } },
+        "category": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      }
+    }
+  },
+  "auth": {
+    "providers": ["password", "google.com"]
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/backend/entities/User" },
+      "description": "Platform user profiles."
+    },
+    "/cohort_applications/{appId}": {
+      "schema": { "$ref": "#/backend/entities/CohortApplication" },
+      "description": "Onsite cohort applications."
+    },
+    "/courses/{courseId}": {
+      "schema": { "$ref": "#/backend/entities/Course" },
+      "description": "Course catalog."
+    },
+    "/projects/{projectId}": {
+      "schema": { "$ref": "#/backend/entities/Project" },
+      "description": "Innovation Hub ventures."
+    }
+  }
+}
