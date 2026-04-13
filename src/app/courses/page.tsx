@@ -70,7 +70,7 @@ export default function CoursesPage() {
                 <Button onClick={() => window.location.reload()} className="mt-6">Retry Connection</Button>
             </div>
           ) : courses.length > 0 ? (
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-10">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4 sm:gap-6 lg:gap-8">
               {courses.map((course) => {
                 const courseImage = course.thumbnail || PlaceHolderImages[0].imageUrl;
                 return (

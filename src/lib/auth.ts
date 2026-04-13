@@ -6,6 +6,7 @@ import {
   signOut as firebaseSignOut,
   signInWithPopup,
   GoogleAuthProvider,
+  sendPasswordResetEmail,
   AuthError
 } from 'firebase/auth';
 import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
@@ -55,14 +56,17 @@ export async function signUpUser(email: string, password: string, name: string, 
     const userCredential = await createUserWithEmailAndPassword(auth, normalizedEmail, password);
     const user = userCredential.user;
     
-    let finalRole: UserRole = role;
+    let finalRole: UserRole = 'student';
+    let isApproved = true;
+    
     if (normalizedEmail === PLATFORM_ADMIN_EMAIL || user.uid === 'x8rM4ioT6jTMU0rEfy2ujMQ0sFy1') {
       finalRole = 'admin';
-    } else if (role === 'admin') {
-      finalRole = 'student';
+    } else {
+      const teacherEmailDoc = await getDoc(doc(firestore, 'approved_teacher_emails', normalizedEmail));
+      if (teacherEmailDoc.exists()) {
+        finalRole = 'teacher';
+      }
     }
-    
-    const isApproved = finalRole === 'student' || finalRole === 'admin';
 
     const userProfile: UserProfile = {
       id: user.uid,
@@ -96,7 +100,15 @@ export async function signInWithGoogle() {
     const isCEO = email === PLATFORM_ADMIN_EMAIL || user.uid === 'x8rM4ioT6jTMU0rEfy2ujMQ0sFy1';
 
     if (!userDoc.exists()) {
-      const finalRole: UserRole = isCEO ? 'admin' : 'student';
+      let finalRole: UserRole = 'student';
+      if (isCEO) {
+        finalRole = 'admin';
+      } else {
+        const teacherEmailDoc = await getDoc(doc(firestore, 'approved_teacher_emails', email!));
+        if (teacherEmailDoc.exists()) {
+          finalRole = 'teacher';
+        }
+      }
       const userProfile: UserProfile = {
         id: user.uid,
         email: email!,
@@ -176,5 +188,14 @@ export async function signOut() {
     return { success: true };
   } catch (error: any) {
     return { success: false, error: error.message };
+  }
+}
+
+export async function adminResetUserPassword(email: string) {
+  try {
+    await sendPasswordResetEmail(auth, email);
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: mapAuthError(error) };
   }
 }

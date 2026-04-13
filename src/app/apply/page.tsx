@@ -25,8 +25,10 @@ export default function CohortApplyPage() {
 
   const [formData, setFormData] = useState({
     fullName: '',
-    projectIdea: '',
-    reason: '',
+    phone: '',
+    ageLocation: '',
+    currentSkills: '',
+    expectations: '',
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -42,8 +44,10 @@ export default function CohortApplyPage() {
         studentId: user.uid,
         email: user.email,
         fullName: formData.fullName,
-        projectIdea: formData.projectIdea,
-        reason: formData.reason,
+        phone: formData.phone,
+        ageLocation: formData.ageLocation,
+        currentSkills: formData.currentSkills,
+        expectations: formData.expectations,
         status: 'pending',
         appliedAt: serverTimestamp(),
       });
@@ -82,46 +86,37 @@ export default function CohortApplyPage() {
         <div className="container mx-auto max-w-2xl">
           <div className="text-center mb-8">
             <h1 className="text-4xl font-extrabold tracking-tight font-headline">Join Cohort 01</h1>
-            <p className="text-muted-foreground mt-2">Apply for onsite hardware labs and elite mentorship in Yaoundé.</p>
+            <p className="text-muted-foreground mt-2">Apply for our intensive 7-week onsite engineering program in Yaoundé. The program culminates in building and submitting a valuable, real-world project.</p>
           </div>
 
           <Card className="border-none shadow-xl">
             <CardHeader>
               <CardTitle>Accelerator Application</CardTitle>
-              <CardDescription>Tell us about the engineering problem you want to solve.</CardDescription>
+              <CardDescription>Tell us about your background and what you hope to achieve during the 7 weeks.</CardDescription>
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-6">
-                <div className="space-y-2">
-                  <Label htmlFor="fullName">Full Name</Label>
-                  <Input 
-                    id="fullName" 
-                    placeholder="John Doe" 
-                    required 
-                    value={formData.fullName}
-                    onChange={e => setFormData({...formData, fullName: e.target.value})}
-                  />
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="fullName">Full Name</Label>
+                    <Input id="fullName" placeholder="John Doe" required value={formData.fullName} onChange={e => setFormData({...formData, fullName: e.target.value})} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="phone">Phone Number</Label>
+                    <Input id="phone" type="tel" placeholder="+237 XXX XXX XXX" required value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} />
+                  </div>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="projectIdea">Your Project Vision</Label>
-                  <Textarea 
-                    id="projectIdea" 
-                    placeholder="What real-world solution do you want to build during the 12 weeks?" 
-                    required 
-                    rows={4}
-                    value={formData.projectIdea}
-                    onChange={e => setFormData({...formData, projectIdea: e.target.value})}
-                  />
+                  <Label htmlFor="ageLocation">Age & Location</Label>
+                  <Input id="ageLocation" placeholder="e.g., 22, Yaoundé" required value={formData.ageLocation} onChange={e => setFormData({...formData, ageLocation: e.target.value})} />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="reason">Why Fusion8?</Label>
-                  <Textarea 
-                    id="reason" 
-                    placeholder="Why are you ready for this intensive onsite experience?" 
-                    required 
-                    value={formData.reason}
-                    onChange={e => setFormData({...formData, reason: e.target.value})}
-                  />
+                  <Label htmlFor="currentSkills">What You Know</Label>
+                  <Textarea id="currentSkills" placeholder="List your current technical skills or domain knowledge. It's okay if you are a beginner!" required rows={3} value={formData.currentSkills} onChange={e => setFormData({...formData, currentSkills: e.target.value})} />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="expectations">Expectations & Final Project</Label>
+                  <Textarea id="expectations" placeholder="What do you hope to learn in these 7 weeks? Do you have an idea for the final valuable project you will submit?" required rows={4} value={formData.expectations} onChange={e => setFormData({...formData, expectations: e.target.value})} />
                 </div>
                 <Button type="submit" className="w-full h-12 text-lg font-bold bg-accent hover:bg-accent/90" disabled={isSubmitting}>
                   {isSubmitting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Transmitting...</> : 'Submit Application'}

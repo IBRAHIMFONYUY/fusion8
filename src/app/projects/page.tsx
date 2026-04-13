@@ -109,8 +109,8 @@ export default function ProjectsHubPage() {
           </div>
 
           <div id="explore" className="space-y-8">
-            <Card className="p-6 border-none shadow-lg bg-background/80 backdrop-blur-sm sticky top-20 z-30">
-                <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 items-end">
+            <Card className="p-3 sm:p-6 border-none shadow-lg bg-background/80 backdrop-blur-sm sticky top-16 z-30">
+                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2 sm:gap-4 md:gap-6 items-end">
                     <div className="space-y-2">
                         <label className="text-[10px] font-bold uppercase text-muted-foreground tracking-widest flex items-center gap-2">
                             <Search className="h-3 w-3" /> Filter by Status
@@ -138,8 +138,10 @@ export default function ProjectsHubPage() {
                             </SelectContent>
                         </Select>
                     </div>
-                    <Button variant="outline" className="w-full hover:bg-accent hover:text-accent-foreground border-dashed" onClick={() => { setStatusFilter('all'); setCategoryFilter('all'); }}>
-                        <FilterX className="mr-2 h-4 w-4" /> Clear All Filters
+                    <Button variant="outline" className="w-full text-xs sm:text-sm hover:bg-accent hover:text-accent-foreground border-dashed" onClick={() => { setStatusFilter('all'); setCategoryFilter('all'); }}>
+                        <FilterX className="mr-1 sm:mr-2 h-3 sm:h-4 w-3 sm:w-4" /> 
+                        <span className="hidden sm:inline">Clear All Filters</span>
+                        <span className="sm:hidden">Reset</span>
                     </Button>
                 </div>
             </Card>
@@ -148,7 +150,7 @@ export default function ProjectsHubPage() {
                 {isLoading ? (
                     <div className="flex justify-center py-20"><Loader2 className="h-12 w-12 animate-spin text-accent" /></div>
                 ) : projects && projects.length > 0 ? (
-                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
                         {projects.map(project => <ProjectCard key={project.id} project={project} onJoinClick={() => setSelectedProject(project)} />)}
                     </div>
                 ) : (

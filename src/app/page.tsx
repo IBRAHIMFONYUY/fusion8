@@ -5,14 +5,17 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter, CardDescription } from '@/components/ui/card';
-import { ArrowRight, Zap, Rocket, ShieldCheck, Code2, TrendingUp, BarChart3, Building2, Cpu, MonitorPlay, ClipboardCheck, Search, Hammer, Loader2, Users } from 'lucide-react';
+import { ArrowRight, Zap, Rocket, ShieldCheck, Code2, TrendingUp, BarChart3, Building2, Cpu, MonitorPlay, ClipboardCheck, Search, Hammer, Loader2, Users, MessageCircle } from 'lucide-react';
 import { Header } from '@/components/header';
+import { ScrollReveal } from '@/components/scroll-reveal';
 import { Footer } from '@/components/footer';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
 import { lmsService, LMSCourse } from '@/services/lms-service';
 import { projectService, Project } from '@/services/project-service';
 import { Badge } from '@/components/ui/badge';
+import { firestore } from '@/firebase';
+import { collection, query, orderBy, getDocs, limit } from 'firebase/firestore';
 
 const applicationSteps = [
   {
@@ -44,6 +47,7 @@ const applicationSteps = [
 export default function Home() {
   const [featuredCourses, setFeaturedCourses] = useState<LMSCourse[]>([]);
   const [activeProjects, setActiveProjects] = useState<Project[]>([]);
+  const [latestNews, setLatestNews] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentSlide, setCurrentSlide] = useState(0);
   
@@ -56,6 +60,7 @@ export default function Home() {
 
   useEffect(() => {
     async function loadData() {
+      // Load Courses and Projects independently
       try {
         const [courseData, projectData] = await Promise.all([
           lmsService.getPopularCourses(6),
@@ -65,9 +70,17 @@ export default function Home() {
         setActiveProjects(projectData.slice(0, 3));
       } catch (err) {
         console.error("Error loading home page data:", err);
-      } finally {
-        setLoading(false);
       }
+      
+      // Load News independently
+      try {
+        const newsSnap = await getDocs(query(collection(firestore, 'news_updates'), orderBy('createdAt', 'desc'), limit(5)));
+        setLatestNews(newsSnap.docs.map(d => ({ id: d.id, ...d.data() })));
+      } catch(e) { 
+        console.error("News load error", e); 
+      }
+      
+      setLoading(false);
     }
     loadData();
 
@@ -128,8 +141,28 @@ export default function Home() {
           </div>
         </section>
 
+        {/* Latest News Bar  */}
+        {latestNews.length > 0 && (
+          <section className="bg-accent text-accent-foreground py-4 border-b border-accent/20 relative z-30 shadow-md">
+            <div className="container mx-auto px-4">
+              <div className="flex flex-col md:flex-row items-center gap-4">
+                <Badge variant="outline" className="border-accent-foreground/30 text-accent-foreground animate-pulse font-black uppercase tracking-widest whitespace-nowrap bg-accent-foreground/10 px-3 py-1">Notice Board</Badge>
+                <div className="flex gap-6 overflow-x-auto w-full pb-2 md:pb-0 scrollbar-hide">
+                  {latestNews.map((n, i) => (
+                    <div key={n.id} className="flex flex-col min-w-[280px] shrink-0 border-l border-accent-foreground/20 pl-4">
+                      <h4 className="font-bold text-sm line-clamp-1 uppercase tracking-tighter">{n.title}</h4>
+                      <p className="text-xs opacity-90 line-clamp-1 font-medium">{n.content}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </section>
+        )}
+
         {/* Path Chooser Section */}
         <section className="py-16 md:py-24 bg-background border-b relative z-20 -mt-12 md:-mt-20">
+          <ScrollReveal animation="fade-up">
           <div className="container mx-auto px-4">
             <div className="grid md:grid-cols-2 gap-8">
               <Card className="border-2 border-accent/20 bg-card shadow-2xl relative overflow-hidden group rounded-[2.5rem]">
@@ -189,10 +222,12 @@ export default function Home() {
               </Card>
             </div>
           </div>
+          </ScrollReveal>
         </section>
 
         {/* Featured Courses Section */}
         <section className="py-16 md:py-24 bg-background">
+          <ScrollReveal animation="fade-up" delay={100}>
           <div className="container mx-auto px-4">
               <div className="flex flex-col md:flex-row justify-between items-end mb-12 gap-4">
                 <div className="max-w-2xl text-center md:text-left">
@@ -267,10 +302,12 @@ export default function Home() {
                 </div>
               )}
           </div>
+          </ScrollReveal>
         </section>
 
         {/* Admissions Process Section */}
         <section className="py-20 bg-secondary/50 overflow-hidden">
+          <ScrollReveal animation="fade-up" delay={100}>
           <div className="container mx-auto px-4">
             <div className="text-center max-w-3xl mx-auto mb-16">
               <Badge variant="secondary" className="mb-4 bg-accent/10 text-accent border-none font-black uppercase tracking-widest text-[10px] px-4 py-1.5">The Admissions Track</Badge>
@@ -298,11 +335,13 @@ export default function Home() {
               </div>
             </div>
           </div>
+          </ScrollReveal>
         </section>
 
         {/* Ventures Section */}
         <section className="py-16 md:py-24 bg-primary text-primary-foreground relative overflow-hidden">
           <div className="absolute top-0 right-0 w-1/3 h-full bg-accent/10 -skew-x-12 transform translate-x-1/2" />
+          <ScrollReveal animation="fade-in" delay={100}>
           <div className="container mx-auto px-4 relative z-10">
             <div className="grid md:grid-cols-2 gap-12 items-center">
               <div className="space-y-6">
@@ -327,7 +366,7 @@ export default function Home() {
               </div>
               <div className="relative aspect-square md:aspect-video rounded-[3rem] overflow-hidden shadow-2xl ring-1 ring-white/10 group">
                 <img 
-                  src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw4fHx0ZWFtJTIwd29ya2luZ3xlbnwwfHx8fDE3NTk1NTgwNjh8MA&ixlib=rb-4.0.3&q=80&w=1080"
+                  src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&q=80&w=1080"
                   alt="Team collaboration"
                   className="w-full h-full object-cover transition-transform duration-[3s] group-hover:scale-110"
                   data-ai-hint="team collaboration"
@@ -336,8 +375,24 @@ export default function Home() {
               </div>
             </div>
           </div>
+          </ScrollReveal>
         </section>
       </main>
+
+      {/* Floating WhatsApp Button */}
+      <a
+        href="https://wa.me/237680548673?text=Hi!%20I've%20been%20testing%20the%20Fusion8%20platform%20and%20wanted%20to%20share%20my%20feedback!%0A%0AHow%20I%20feel%20about%20it:%0A%5BYour%20thoughts%20here%5D%0A%0AFeatures%20I%20think%20you%20should%20add:%0A%5BYour%20ideas%20here%5D"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="fixed bottom-6 right-6 z-50 flex items-center justify-center p-4 bg-green-500 hover:bg-green-600 text-white rounded-full shadow-2xl hover:scale-110 transition-transform group"
+        aria-label="Need Help? Contact us on WhatsApp"
+      >
+        <MessageCircle className="h-8 w-8" />
+        <span className="absolute right-full mr-4 bg-gray-900 text-white text-sm font-bold px-3 py-1.5 rounded-xl shadow-xl whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none flex items-center">
+          Tap to send Feedback! <span className="absolute -right-1.5 top-1/2 -translate-y-1/2 border-y-8 border-l-8 border-y-transparent border-l-gray-900" />
+        </span>
+      </a>
+
       <Footer />
     </div>
   );

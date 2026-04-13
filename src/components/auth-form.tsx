@@ -96,7 +96,7 @@ export function AuthForm() {
   };
 
   return (
-    <Card className="w-full max-w-md shadow-2xl border-none">
+    <Card className="w-full max-w-sm sm:max-w-md shadow-2xl border-none">
       <CardHeader className="text-center pb-2">
         <CardTitle className="text-3xl flex items-center justify-center gap-2 font-headline font-black">
             <Rocket className="text-accent h-8 w-8"/> FUSION8
@@ -113,11 +113,11 @@ export function AuthForm() {
           </Alert>
         )}
 
-        <div className="space-y-4 mb-6">
+        <div className="space-y-3 sm:space-y-4 mb-6">
           <Button 
             type="button" 
             variant="outline" 
-            className="w-full h-11 flex items-center justify-center gap-3 font-semibold border-2"
+            className="w-full h-9 sm:h-10 flex items-center justify-center gap-3 font-semibold border-2"
             onClick={handleGoogleSignIn}
             disabled={isPending}
           >
@@ -140,7 +140,7 @@ export function AuthForm() {
         </div>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 sm:space-y-6">
             <Tabs 
               value={activeTab} 
               onValueChange={(v) => setActiveTab(v as 'login' | 'register')} 
@@ -178,54 +178,13 @@ export function AuthForm() {
                     </FormItem>
                   )}
                 />
-                <Button type="submit" className="w-full h-11 text-base font-bold bg-primary hover:bg-primary/90" disabled={isPending}>
+                <Button type="submit" className="w-full h-9 sm:h-10 text-base font-bold bg-primary hover:bg-primary/90" disabled={isPending}>
                   {isPending ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : "Verify & Enter"}
                 </Button>
               </TabsContent>
 
               <TabsContent value="register" className="space-y-4 pt-6 outline-none">
-                <FormField
-                  control={form.control}
-                  name="role"
-                  render={({ field }) => (
-                    <FormItem className="space-y-3 mb-6">
-                      <FormLabel>Register as:</FormLabel>
-                      <FormControl>
-                        <RadioGroup
-                          onValueChange={field.onChange}
-                          defaultValue={field.value}
-                          className="flex gap-4"
-                        >
-                          <FormItem className="flex items-center space-x-3 space-y-0 flex-1">
-                            <FormControl>
-                              <RadioGroupItem value="student" id="role-student" className="peer sr-only" />
-                            </FormControl>
-                            <Label
-                              htmlFor="role-student"
-                              className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-accent [&:has([data-state=checked])]:border-accent cursor-pointer w-full"
-                            >
-                              <User className="mb-2 h-6 w-6" />
-                              <span className="font-bold text-xs uppercase">Student</span>
-                            </Label>
-                          </FormItem>
-                          <FormItem className="flex items-center space-x-3 space-y-0 flex-1">
-                            <FormControl>
-                              <RadioGroupItem value="teacher" id="role-teacher" className="peer sr-only" />
-                            </FormControl>
-                            <Label
-                              htmlFor="role-teacher"
-                              className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-accent [&:has([data-state=checked])]:border-accent cursor-pointer w-full"
-                            >
-                              <GraduationCap className="mb-2 h-6 w-6" />
-                              <span className="font-bold text-xs uppercase">Lecturer</span>
-                            </Label>
-                          </FormItem>
-                        </RadioGroup>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+
 
                 <FormField
                   control={form.control}
@@ -271,11 +230,7 @@ export function AuthForm() {
                   {isPending ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : "Create Portal"}
                 </Button>
 
-                {form.watch('role') === 'teacher' && (
-                  <p className="text-[10px] text-center text-muted-foreground mt-4 italic">
-                    Lecturer accounts require admin vetting before curriculum access is granted.
-                  </p>
-                )}
+
               </TabsContent>
             </Tabs>
           </form>

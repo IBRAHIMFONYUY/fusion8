@@ -9,9 +9,10 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Header } from '@/components/header';
 import { Footer } from '@/components/footer';
-import { Check, Loader2, User, Briefcase, BookOpen, Heart, Target, Lightbulb, Award, Mail, Lock } from 'lucide-react';
+import { Check, Loader2, User, Briefcase, Phone, BookOpen, Heart, Target, Lightbulb, Award, Mail, Lock } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { signUpUser } from '@/lib/auth';
+import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
+import { firestore } from '@/firebase';
 import { useRouter } from 'next/navigation';
 
 export default function BecomeInstructorPage() {
@@ -23,7 +24,7 @@ export default function BecomeInstructorPage() {
     const [formData, setFormData] = useState({
         fullName: '',
         email: '',
-        password: '',
+        phone: '',
         experience: '',
         subjects: '',
     });
@@ -35,31 +36,24 @@ export default function BecomeInstructorPage() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         
-        if (formData.password.length < 6) {
-            toast({ variant: 'destructive', title: "Password too short", description: "Password must be at least 6 characters." });
-            return;
-        }
-
         setIsSubmitting(true);
         
         try {
-            // Create the teacher account
-            const result = await signUpUser(formData.email, formData.password, formData.fullName, 'teacher');
+            await addDoc(collection(firestore, 'teacher_applications'), {
+                fullName: formData.fullName,
+                email: formData.email.toLowerCase(),
+                phone: formData.phone,
+                experience: formData.experience,
+                subjects: formData.subjects,
+                status: 'pending',
+                appliedAt: serverTimestamp(),
+            });
             
-            if (result.success) {
-                toast({
-                    title: "Account Created!",
-                    description: "Your teacher account is ready. Please wait for admin approval to publish courses.",
-                });
-                setStep(2);
-                
-                // Keep them on success for 3 seconds then go to dashboard
-                setTimeout(() => {
-                    router.push('/teacher/dashboard');
-                }, 3000);
-            } else {
-                toast({ variant: 'destructive', title: "Application Error", description: result.error });
-            }
+            toast({
+                title: "Application Received!",
+                description: "Your application is under review. You'll receive an email once approved.",
+            });
+            setStep(2);
         } catch (error: any) {
             toast({ variant: 'destructive', title: "Error", description: "An unexpected error occurred." });
         } finally {
@@ -115,8 +109,8 @@ export default function BecomeInstructorPage() {
                  {step === 1 ? (
                     <form onSubmit={handleSubmit}>
                         <CardHeader>
-                            <CardTitle>Lecturer Registration</CardTitle>
-                            <CardDescription>Create your account to start building your course catalog.</CardDescription>
+                            <CardTitle>Lecturer Application</CardTitle>
+                            <CardDescription>Tell us about yourself. If approved, you can register using the email provided.</CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-8">
                             <div className="space-y-4">
@@ -131,8 +125,8 @@ export default function BecomeInstructorPage() {
                                         <Input id="email" type="email" placeholder="you@example.com" required value={formData.email} onChange={handleInputChange} />
                                     </div>
                                     <div className="space-y-2">
-                                        <Label htmlFor="password">Create Password</Label>
-                                        <Input id="password" type="password" placeholder="••••••••" required value={formData.password} onChange={handleInputChange} />
+                                        <Label htmlFor="phone">Phone Number</Label>
+                                        <Input id="phone" type="tel" placeholder="+237 XXX XXX XXX" required value={formData.phone} onChange={handleInputChange} />
                                     </div>
                                 </div>
                             </div>
@@ -154,7 +148,7 @@ export default function BecomeInstructorPage() {
                                             <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Creating Account...
                                         </>
                                     ) : (
-                                        'Create Teacher Account'
+                                        'Submit Application'
                                     )}
                                 </Button>
                             </div>
@@ -167,10 +161,10 @@ export default function BecomeInstructorPage() {
                                 <Check className="h-8 w-8 text-green-600" />
                             </div>
                         </div>
-                        <h2 className="text-2xl font-bold">Registration Successful!</h2>
-                        <p className="text-muted-foreground mt-2 max-w-md mx-auto">Your teacher account has been created. You are being redirected to your dashboard where you can start building your first course.</p>
+                        <h2 className="text-2xl font-bold">Application Received!</h2>
+                        <p className="text-muted-foreground mt-2 max-w-md mx-auto">Your application is now under review by our administration. We will contact you at your email. Once approved, you can register for an account using this email!</p>
                         <Button asChild variant="outline" className="mt-6">
-                            <a href="/teacher/dashboard">Go to Dashboard</a>
+                            <a href="/">Return Home</a>
                         </Button>
                     </CardContent>
                  )}

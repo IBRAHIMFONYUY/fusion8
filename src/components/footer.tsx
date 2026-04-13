@@ -5,7 +5,7 @@ export function Footer() {
   return (
     <footer className="bg-primary text-primary-foreground">
       <div className="container mx-auto px-4 py-16">
-        <div className="grid md:grid-cols-4 gap-12">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8 md:gap-12">
           <div className="col-span-1 md:col-span-1 space-y-4">
             <Link href="/" className="flex items-center gap-2 font-bold text-2xl">
               <Rocket className="h-8 w-8 text-accent" />
@@ -23,7 +23,7 @@ export function Footer() {
           
           <div className="space-y-4">
             <h4 className="font-bold font-headline uppercase tracking-widest text-xs text-accent">For Students</h4>
-            <ul className="space-y-2 text-sm text-neutral-400">
+            <ul className="space-y-1 sm:space-y-2 text-xs sm:text-sm text-neutral-400">
               <li><Link href="/courses" className="hover:text-white transition-colors">Course Catalog</Link></li>
               <li><Link href="/projects" className="hover:text-white transition-colors">Innovation Hub</Link></li>
               <li><Link href="/student/assignments" className="hover:text-white transition-colors">My Dashboard</Link></li>
@@ -33,7 +33,7 @@ export function Footer() {
 
           <div className="space-y-4">
             <h4 className="font-bold font-headline uppercase tracking-widest text-xs text-accent">For Partners</h4>
-            <ul className="space-y-2 text-sm text-neutral-400">
+            <ul className="space-y-1 sm:space-y-2 text-xs sm:text-sm text-neutral-400">
               <li><Link href="/become-instructor" className="hover:text-white transition-colors">Teach on Fusion8</Link></li>
               <li><Link href="#" className="hover:text-white transition-colors">Investor Relations</Link></li>
               <li><Link href="#" className="hover:text-white transition-colors">Sponsorships</Link></li>
@@ -43,7 +43,7 @@ export function Footer() {
 
           <div className="space-y-4">
             <h4 className="font-bold font-headline uppercase tracking-widest text-xs text-accent">Contact</h4>
-            <ul className="space-y-3 text-sm text-neutral-400">
+            <ul className="space-y-2 sm:space-y-3 text-xs sm:text-sm text-neutral-400">
               <li className="flex items-center gap-2"><Mail className="h-4 w-4" /> support@fusion8.com</li>
               <li className="flex items-center gap-2"><Globe className="h-4 w-4" /> Yaoundé, Cameroon</li>
             </ul>

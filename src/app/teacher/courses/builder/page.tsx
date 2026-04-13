@@ -65,7 +65,7 @@ const SortableLessonItem = ({
   };
 
   return (
-    <div ref={setNodeRef} style={style} className="p-4 rounded-lg bg-background relative flex justify-between items-center ml-10 border">
+    <div ref={setNodeRef} style={style} className="p-2 sm:p-4 rounded-lg bg-background relative flex justify-between items-center ml-4 sm:ml-10 border">
       <div className="flex items-center gap-2 flex-grow">
         <Button variant="ghost" size="icon" {...attributes} {...listeners} className="cursor-grab">
           <GripVertical className="h-5 w-5 text-muted-foreground" />

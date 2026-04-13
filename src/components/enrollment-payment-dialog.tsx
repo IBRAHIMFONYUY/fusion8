@@ -13,9 +13,8 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, CreditCard, ShieldCheck } from 'lucide-react';
+import { Loader2, ShieldCheck } from 'lucide-react';
 import { paymentService } from '@/services/payment-service';
 import { useRouter } from 'next/navigation';
 
@@ -37,7 +36,7 @@ export function EnrollmentPaymentDialog({
   onClose,
 }: EnrollmentPaymentDialogProps) {
   const [phone, setPhone] = useState('');
-  const [network, setNetwork] = useState<'MTN' | 'ORANGE'>('MTN');
+  const network = 'MTN';
   const [isProcessing, setIsProcessing] = useState(false);
   const { toast } = useToast();
   const router = useRouter();
@@ -95,56 +94,44 @@ export function EnrollmentPaymentDialog({
           </DialogHeader>
           
           <div className="space-y-6 py-4">
-            <div className="p-4 bg-secondary/50 rounded-lg border flex justify-between items-center">
-              <span className="font-medium text-muted-foreground">Total Amount</span>
-              <span className="text-2xl font-bold text-accent">{price.toLocaleString()} XAF</span>
-            </div>
-
-            <div className="space-y-3">
-              <Label>Payment Method</Label>
-              <RadioGroup 
-                value={network} 
-                onValueChange={(v) => setNetwork(v as any)}
-                className="grid grid-cols-2 gap-4"
-              >
-                <div>
-                  <RadioGroupItem value="MTN" id="mtn" className="peer sr-only" />
-                  <Label
-                    htmlFor="mtn"
-                    className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary"
-                  >
-                    <span className="font-bold">MTN</span>
-                    <span className="text-xs text-muted-foreground uppercase">MoMo</span>
-                  </Label>
-                </div>
-                <div>
-                  <RadioGroupItem value="ORANGE" id="orange" className="peer sr-only" />
-                  <Label
-                    htmlFor="orange"
-                    className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary"
-                  >
-                    <span className="font-bold">Orange</span>
-                    <span className="text-xs text-muted-foreground uppercase">Money</span>
-                  </Label>
-                </div>
-              </RadioGroup>
+            <div className="p-4 bg-accent/10 border-accent/20 border rounded-xl space-y-3">
+              <div className="flex justify-between items-center pb-3 border-b border-accent/10">
+                <span className="font-bold text-accent">Total Course Fee</span>
+                <span className="text-2xl font-black text-accent">{price.toLocaleString()} XAF</span>
+              </div>
+              
+              <div className="space-y-2 pt-2">
+                 <p className="text-sm font-bold flex items-center gap-2">
+                     <span className="flex items-center justify-center w-6 h-6 rounded-full bg-accent text-white text-xs">1</span>
+                     Dial <span className="font-mono bg-secondary px-2 py-0.5 rounded text-accent">*126#</span> to access MTN Mobile Money.
+                 </p>
+                 <p className="text-sm font-bold flex items-center gap-2">
+                     <span className="flex items-center justify-center w-6 h-6 rounded-full bg-accent text-white text-xs">2</span>
+                     Send <span className="font-black">{price.toLocaleString()} XAF</span> to <span className="font-black text-lg text-accent tracking-widest pl-1">680548673</span>
+                 </p>
+                 <p className="text-sm font-bold flex items-center gap-2">
+                     <span className="flex items-center justify-center w-6 h-6 rounded-full bg-accent text-white text-xs">3</span>
+                     Enter the MTN number you paid from below to verify.
+                 </p>
+              </div>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="phone">Phone Number (Cameroon)</Label>
+              <Label htmlFor="phone" className="font-bold text-sm">Your Payment Phone Number</Label>
               <Input
                 id="phone"
                 type="tel"
-                placeholder="67xxxxxxx / 69xxxxxxx"
+                placeholder="e.g. 67XXXXXXX"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
                 required
+                className="h-12 text-lg font-bold tracking-widest"
               />
             </div>
 
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <ShieldCheck className="h-4 w-4 text-green-500" />
-              Secure payment processed by Fapshi.
+            <div className="flex items-center gap-2 text-xs font-bold text-muted-foreground bg-secondary/50 p-3 rounded-lg border">
+              <ShieldCheck className="h-5 w-5 text-accent" />
+              Your enrollment will be activated immediately after verifying the transaction.
             </div>
           </div>
 

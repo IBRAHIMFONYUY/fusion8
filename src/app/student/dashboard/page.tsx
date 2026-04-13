@@ -9,10 +9,10 @@ import { Progress } from '@/components/ui/progress';
 import { BookOpen, CheckCircle, FolderKanban, Star, ArrowRight, Loader2, PartyPopper, Play, Calendar, FileText, Bell } from 'lucide-react';
 import { useAuth, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, query, where, doc, getDoc, limit, orderBy } from 'firebase/firestore';
+import { ShieldAlert } from 'lucide-react';
 import { EmptyState } from '@/components/empty-state';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Badge } from '@/components/ui/badge';
-import { format } from 'date-fns';
 
 export default function StudentDashboardPage() {
   const { user, firestore, isLoading: authLoading } = useAuth();
@@ -71,6 +71,24 @@ export default function StudentDashboardPage() {
     );
   }
 
+  // Check if they have zero active/paid enrollments
+  if (enrollments && enrollments.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[70vh] space-y-6 p-4">
+        <div className="w-24 h-24 bg-destructive/10 text-destructive rounded-full flex items-center justify-center border-4 border-destructive/20 mb-4 animate-pulse">
+           <ShieldAlert className="h-12 w-12" />
+        </div>
+        <h1 className="text-3xl md:text-5xl font-black font-headline uppercase tracking-tighter text-center">Dashboard Locked</h1>
+        <p className="max-w-lg text-center text-muted-foreground font-medium text-lg leading-relaxed">
+           You have not completed any course enrollments. You must enroll in a course and finalize your MTN MoMo payment to unlock your student profile, lab schedules, and coursework.
+        </p>
+        <Button asChild size="lg" className="mt-8 h-14 px-8 font-black text-lg uppercase tracking-widest bg-accent hover:bg-accent/90 shadow-xl shadow-accent/20">
+             <NextLink href="/courses">Go to Catalog & Enroll</NextLink>
+        </Button>
+      </div>
+    );
+  }
+
   const completedCount = activeCourses.filter(c => c.progress >= 100).length;
 
   return (
@@ -104,9 +122,9 @@ export default function StudentDashboardPage() {
       </div>
 
       {/* KPI Stats */}
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 animate-slide-up-fade opacity-0 animation-delay-200">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 animate-slide-up-fade opacity-0 animation-delay-200">
         <Card className="border-none shadow-md bg-card/50 backdrop-blur-sm ring-1 ring-black/5">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between space-y-1 sm:space-y-0 pb-2">
             <CardTitle className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">My Curriculum</CardTitle>
             <BookOpen className="h-4 w-4 text-accent" />
           </CardHeader>
@@ -115,7 +133,7 @@ export default function StudentDashboardPage() {
           </CardContent>
         </Card>
         <Card className="border-none shadow-md bg-card/50 backdrop-blur-sm ring-1 ring-black/5">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between space-y-1 sm:space-y-0 pb-2">
             <CardTitle className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Milestones</CardTitle>
             <CheckCircle className="h-4 w-4 text-green-500" />
           </CardHeader>
@@ -124,7 +142,7 @@ export default function StudentDashboardPage() {
           </CardContent>
         </Card>
         <Card className="border-none shadow-md bg-card/50 backdrop-blur-sm ring-1 ring-black/5">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between space-y-1 sm:space-y-0 pb-2">
                 <CardTitle className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Active Teams</CardTitle>
                 <FolderKanban className="h-4 w-4 text-blue-500" />
             </CardHeader>
@@ -133,7 +151,7 @@ export default function StudentDashboardPage() {
             </CardContent>
         </Card>
         <Card className="border-none shadow-md bg-card/50 backdrop-blur-sm ring-1 ring-black/5">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between space-y-1 sm:space-y-0 pb-2">
                 <CardTitle className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Skill Rank</CardTitle>
                 <Star className="h-4 w-4 text-yellow-500" />
             </CardHeader>
