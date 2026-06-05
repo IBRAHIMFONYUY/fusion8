@@ -1,0 +1,16 @@
+{
+  "folders": [
+    {
+      "name": "Frontend (Next.js)",
+      "path": "frontend"
+    },
+    {
+      "name": "Backend (Firebase)",
+      "path": "backend"
+    }
+  ],
+  "settings": {
+    "typescript.tsdk": "frontend/node_modules/typescript/lib",
+    "typescript.enablePromptUseWorkspaceTsdk": true
+  }
+}

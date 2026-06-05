@@ -1,0 +1,181 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+  FUSION 8 — Brand Palette (dark-first)
+  --background  #0A0E10  deep charcoal black
+  --foreground  #F6F5F2  warm cream white
+  --accent      #E44D28  molten red-orange
+  Rule: Black dominates. White communicates. Orange acts.
+*/
+
+@layer base {
+  :root {
+    --background:           210 23% 5%;    /* #0A0E10 — deep charcoal */
+    --foreground:           45 18% 96%;    /* #F6F5F2 — warm cream */
+
+    --card:                 212 31% 9%;    /* #111820 — elevated surface */
+    --card-foreground:      45 18% 96%;
+
+    --popover:              212 31% 9%;
+    --popover-foreground:   45 18% 96%;
+
+    --primary:              13 76% 52%;    /* #E44D28 — molten orange */
+    --primary-foreground:   0 0% 100%;
+
+    --secondary:            210 20% 8%;    /* deep panel background */
+    --secondary-foreground: 45 18% 96%;
+
+    --muted:                210 18% 12%;
+    --muted-foreground:     45 12% 58%;
+
+    --accent:               13 76% 52%;    /* #E44D28 — molten orange */
+    --accent-foreground:    0 0% 100%;
+
+    --destructive:          0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border:               45 8% 14%;     /* subtle cream border */
+    --input:                210 20% 10%;
+    --ring:                 13 76% 52%;    /* orange focus ring */
+
+    --chart-1:              13 76% 52%;    /* orange */
+    --chart-2:              11 73% 44%;    /* deep orange */
+    --chart-3:              45 18% 75%;    /* cream */
+    --chart-4:              13 50% 65%;    /* soft orange */
+    --chart-5:              210 23% 22%;   /* lighter charcoal */
+
+    --radius: 0.5rem;
+  }
+
+  /* Dark variant — same as default (already dark-first) */
+  .dark {
+    --background:           210 28% 3%;
+    --foreground:           45 18% 96%;
+    --card:                 210 25% 7%;
+    --card-foreground:      45 18% 96%;
+    --primary:              13 76% 55%;
+    --primary-foreground:   0 0% 100%;
+    --secondary:            210 20% 6%;
+    --muted:                210 15% 10%;
+    --muted-foreground:     45 12% 52%;
+    --accent:               13 76% 55%;
+    --border:               45 8% 12%;
+    --input:                210 20% 8%;
+    --ring:                 13 76% 55%;
+  }
+
+  /* ── Portal theme — clean white for student/teacher/admin dashboards ── */
+  .portal-theme {
+    --background:           0 0% 97%;          /* #F7F7F7 near-white */
+    --foreground:           210 23% 8%;         /* near-black text */
+
+    --card:                 0 0% 100%;          /* pure white cards */
+    --card-foreground:      210 23% 8%;
+
+    --popover:              0 0% 100%;
+    --popover-foreground:   210 23% 8%;
+
+    --primary:              210 23% 8%;         /* dark for buttons/headings */
+    --primary-foreground:   0 0% 100%;
+
+    --secondary:            210 14% 93%;        /* very light grey panels */
+    --secondary-foreground: 210 23% 8%;
+
+    --muted:                210 14% 93%;
+    --muted-foreground:     210 10% 46%;
+
+    --accent:               13 76% 52%;         /* orange stays — brand consistency */
+    --accent-foreground:    0 0% 100%;
+
+    --destructive:          0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border:               210 14% 89%;
+    --input:                210 14% 89%;
+    --ring:                 13 76% 52%;
+
+    --chart-1:              13 76% 52%;
+    --chart-2:              11 73% 44%;
+    --chart-3:              210 23% 40%;
+    --chart-4:              13 50% 65%;
+    --chart-5:              210 14% 70%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-family: 'Inter', sans-serif;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Inter', sans-serif;
+    font-weight: 900;
+    letter-spacing: -0.03em;
+  }
+}
+
+/* ── Grid texture overlay for dark sections ──────────────────────────────── */
+.grid-texture {
+  background-image:
+    linear-gradient(rgba(246, 245, 242, 0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(246, 245, 242, 0.025) 1px, transparent 1px);
+  background-size: 48px 48px;
+}
+
+/* ── Orange radial glow ───────────────────────────────────────────────────── */
+.glow-orange {
+  background: radial-gradient(ellipse at center, rgba(228, 77, 40, 0.12) 0%, transparent 70%);
+}
+.glow-orange-sm {
+  background: radial-gradient(ellipse at center, rgba(228, 77, 40, 0.08) 0%, transparent 60%);
+}
+
+/* ── Orange left-border accent ───────────────────────────────────────────── */
+.border-accent-left {
+  border-left: 3px solid hsl(13 76% 52%);
+}
+
+@layer utilities {
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Text opacity helpers matching brand opacity scale */
+  .text-cream {        color: rgba(246, 245, 242, 1.00); }
+  .text-cream-80 {     color: rgba(246, 245, 242, 0.80); }
+  .text-cream-55 {     color: rgba(246, 245, 242, 0.55); }
+  .text-cream-30 {     color: rgba(246, 245, 242, 0.30); }
+
+  /* Orange tint backgrounds */
+  .bg-orange-glow {    background-color: rgba(228, 77, 40, 0.12); }
+  .bg-orange-subtle {  background-color: rgba(228, 77, 40, 0.07); }
+
+  /* Responsive type scale */
+  .text-display {
+    font-size: clamp(2.5rem, 7vw, 5.5rem);
+    font-weight: 900;
+    letter-spacing: -0.05em;
+    line-height: 1.0;
+  }
+  .text-hero {
+    font-size: clamp(1.75rem, 4vw, 3.5rem);
+    font-weight: 900;
+    letter-spacing: -0.04em;
+    line-height: 1.05;
+  }
+  .text-section {
+    font-size: clamp(1.5rem, 3vw, 2.5rem);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1.15;
+  }
+}

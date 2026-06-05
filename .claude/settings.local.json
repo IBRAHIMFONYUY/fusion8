@@ -1,0 +1,25 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run *)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:9002/)",
+      "Bash(grep -n \"5000\\\\|50000\" src/app/courses/page.tsx src/app/courses/[id]/page.tsx src/services/lms-service.ts)",
+      "Bash(kill 1270)",
+      "Bash(taskkill //PID 1354 //F)",
+      "Read(//tmp/**)",
+      "Bash(mv src *)",
+      "Bash(mv next.config.ts frontend/)",
+      "Bash(mv package.json frontend/)",
+      "Bash(mv package-lock.json frontend/)",
+      "Bash(mv tsconfig.json frontend/)",
+      "PowerShell(Move-Item -Path \"C:\\\\Users\\\\NEW USER\\\\Desktop\\\\download \\(2\\)\\\\.firebase\" -Destination \"C:\\\\Users\\\\NEW USER\\\\Desktop\\\\download \\(2\\)\\\\backend\\\\\" -Force)",
+      "Bash(npx tsc *)",
+      "Bash(node_modules/.bin/tsc --noEmit)",
+      "Bash(npm install *)",
+      "Read(//c/Users/NEWUSE~1/AppData/Local/Temp/claude/c--Users-NEW-USER-Desktop-download--2-/e1281291-341e-442d-b202-a2ca6c48d140/tasks/**)",
+      "Bash(firebase deploy *)",
+      "Bash(./node_modules/.bin/tsc --noEmit)",
+      "Bash(npx next *)"
+    ]
+  }
+}

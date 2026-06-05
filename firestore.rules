@@ -2,134 +2,155 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // =====================================================================
-    // 1. MASTER AUTHORITY HELPERS
-    // =====================================================================
-    
-    function isSignedIn() {
+    function isAuth() {
       return request.auth != null;
     }
 
-    // High-Performance Master Bypass: Direct authorization for the CEO account
-    function isMasterAdmin() {
-      return isSignedIn() && (
-        request.auth.uid == "x8rM4ioT6jTMU0rEfy2ujMQ0sFy1" ||
-        request.auth.token.email == "ceo@fusion8.com"
-      );
+    function role() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
     }
 
-    // Role-based authority markers
-    function isAdmin() {
-      return isMasterAdmin() || (isSignedIn() && exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid)));
-    }
+    function isAdmin()          { return isAuth() && role() == 'admin'; }
+    function isTeacher()        { return isAuth() && role() == 'teacher'; }
+    function isAdminOrTeacher() { return isAuth() && role() in ['admin', 'teacher']; }
+    function isOwner(uid)       { return isAuth() && request.auth.uid == uid; }
 
-    function isApprovedTeacher() {
-      return isAdmin() || (isSignedIn() && exists(/databases/$(database)/documents/approved_teachers/$(request.auth.uid)));
-    }
-
-    function isOwner(userId) {
-      return isSignedIn() && request.auth.uid == userId;
-    }
-
-    // =====================================================================
-    // 2. GLOBAL OVERRIDE (Recursive)
-    // =====================================================================
-
-    match /{allPaths=**} {
-      allow read, write: if isMasterAdmin();
-    }
-
-    // =====================================================================
-    // 3. COLLECTION RULES
-    // =====================================================================
-
+    // ── Users ──────────────────────────────────────────────────────────────────
     match /users/{userId} {
-      allow read: if isOwner(userId) || isAdmin();
-      allow create: if isOwner(userId);
-      allow update: if isAdmin() || (isOwner(userId) && request.resource.data.role == resource.data.role);
+      allow read:  if isAuth();
+      allow write: if isOwner(userId) || isAdmin();
     }
 
-    match /roles_admin/{uid} { 
-      allow read: if isSignedIn(); 
-      allow write: if isMasterAdmin(); 
-    }
-    
-    match /approved_teachers/{uid} { 
-      allow read: if isSignedIn(); 
-      allow write: if isAdmin(); 
-    }
-
-    match /teacher_applications/{appId} {
-      allow create: if true;
-      allow read, update, delete: if isAdmin();
-    }
-
-    match /news_updates/{docId} {
-      allow read: if true;
-      allow write: if isAdmin();
-    }
-
-    match /approved_teacher_emails/{docId} {
-      allow read: if true;
-      allow write: if isAdmin();
-    }
-
+    // ── Courses ────────────────────────────────────────────────────────────────
     match /courses/{courseId} {
-      allow read: if (resource == null) || (resource.data.status == "published") || (isSignedIn() && (resource.data.teacherId == request.auth.uid || isAdmin()));
-      allow create: if isApprovedTeacher() && request.resource.data.teacherId == request.auth.uid;
-      allow update: if isAdmin() || (isApprovedTeacher() && resource.data.teacherId == request.auth.uid);
-      allow delete: if isAdmin();
+      allow read:  if true;
+      allow write: if isAdminOrTeacher();
 
-      match /modules/{mId} {
-        allow read: if true; 
-        allow write: if isAdmin() || (isApprovedTeacher() && request.resource.data.teacherId == request.auth.uid);
+      match /modules/{moduleId} {
+        allow read:  if true;
+        allow write: if isAdminOrTeacher();
       }
-      match /lessons/{lId} {
-        allow read: if true;
-        allow write: if isAdmin() || (isApprovedTeacher() && request.resource.data.teacherId == request.auth.uid);
+      match /lessons/{lessonId} {
+        allow read:  if isAuth();
+        allow write: if isAdminOrTeacher();
+      }
+      match /recordings/{recordingId} {
+        allow read:  if isAuth();
+        allow write: if isAdminOrTeacher();
       }
     }
 
-    match /broadcasts/{broadcastId} {
-      allow read: if isSignedIn();
-      allow create: if isApprovedTeacher() || isAdmin();
-      allow update, delete: if isAdmin() || (isSignedIn() && resource.data.teacherId == request.auth.uid);
-    }
-
-    match /assignments/{assignmentId} {
-      allow read: if isSignedIn();
-      allow write: if isApprovedTeacher() || isAdmin();
-    }
-
+    // ── Enrollments ────────────────────────────────────────────────────────────
     match /enrollments/{enrollmentId} {
-      allow create: if isSignedIn() && request.resource.data.studentId == request.auth.uid;
-      allow read: if isAdmin() || (isSignedIn() && (resource == null || resource.data.studentId == request.auth.uid));
+      allow read:   if isAdminOrTeacher() || (isAuth() && resource.data.studentId == request.auth.uid);
+      allow create: if isAuth();
+      allow update: if isAdminOrTeacher() || (isAuth() && resource.data.studentId == request.auth.uid);
+      allow delete: if isAdmin();
     }
 
+    // ── Assignments ────────────────────────────────────────────────────────────
+    match /assignments/{assignmentId} {
+      allow read:  if isAuth();
+      allow write: if isAdminOrTeacher();
+    }
+
+    // ── Submissions ────────────────────────────────────────────────────────────
     match /submissions/{submissionId} {
-      allow create: if isSignedIn() && request.resource.data.studentId == request.auth.uid;
-      allow read: if isAdmin() || (isSignedIn() && (resource == null || resource.data.studentId == request.auth.uid || resource.data.teacherId == request.auth.uid));
-      allow update: if isAdmin() || (isApprovedTeacher() && resource.data.teacherId == request.auth.uid);
+      allow read:   if isAdminOrTeacher() || (isAuth() && resource.data.studentId == request.auth.uid);
+      allow create: if isAuth();
+      allow update: if isAdminOrTeacher() || (isAuth() && resource.data.studentId == request.auth.uid);
+      allow delete: if isAdmin();
     }
 
-    match /cohort_applications/{appId} {
-      allow create: if true; 
-      allow read, update, delete: if isAdmin() || (isSignedIn() && (resource == null || resource.data.studentId == request.auth.uid));
-    }
-
-    match /notifications/{notificationId} {
-      // Query-Optimized Read Rules: explicitly handle global and owner access for list queries
-      allow read: if isMasterAdmin();
-      allow read: if isSignedIn() && exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid));
-      allow read: if isSignedIn() && (resource == null || resource.data.userId == request.auth.uid || resource.data.global == true);
-      allow create: if isMasterAdmin() || (isSignedIn() && exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid))) || isApprovedTeacher();
-      allow delete: if isMasterAdmin() || (isSignedIn() && exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid))) || (isSignedIn() && resource.data.userId == request.auth.uid);
-    }
-    
+    // ── Projects ───────────────────────────────────────────────────────────────
     match /projects/{projectId} {
-      allow read: if true;
-      allow create: if isSignedIn();
-      allow update: if isAdmin() || (isSignedIn() && (resource.data.studentLeadId == request.auth.uid || resource.data.members[request.auth.uid] != null));
+      allow read:   if isAuth();
+      allow create: if isAuth();
+      allow update: if isAdminOrTeacher() || (isAuth() && resource.data.leadStudentId == request.auth.uid);
+      allow delete: if isAdmin();
+    }
+
+    // ── Project Proposals ──────────────────────────────────────────────────────
+    match /project_proposals/{proposalId} {
+      allow read:   if isAdminOrTeacher() || (isAuth() && resource.data.studentLeadId == request.auth.uid);
+      allow create: if isAuth();
+      allow update: if isAdminOrTeacher() || (isAuth() && resource.data.studentLeadId == request.auth.uid);
+      allow delete: if isAdmin();
+    }
+
+    // ── Notifications ──────────────────────────────────────────────────────────
+    match /notifications/{notificationId} {
+      allow read:  if isAuth();
+      allow write: if isAdminOrTeacher();
+    }
+
+    // ── Broadcasts ─────────────────────────────────────────────────────────────
+    match /broadcasts/{broadcastId} {
+      allow read:  if isAuth();
+      allow write: if isAdminOrTeacher();
+
+      match /attendance/{attendeeId} {
+        allow read:  if isAdminOrTeacher() || isOwner(attendeeId);
+        allow write: if isAuth();
+      }
+    }
+
+    // ── Cohort Applications ────────────────────────────────────────────────────
+    match /cohort_applications/{applicationId} {
+      allow read:   if isAdmin() || (isAuth() && resource.data.studentId == request.auth.uid);
+      allow create: if isAuth();
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // ── Teacher Applications ───────────────────────────────────────────────────
+    match /teacher_applications/{applicationId} {
+      allow read:   if isAdmin() || (isAuth() && resource.data.userId == request.auth.uid);
+      allow create: if isAuth();
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // ── Blog Posts ─────────────────────────────────────────────────────────────
+    match /blog_posts/{postId} {
+      allow read:  if true;
+      allow write: if isAdmin();
+    }
+
+    // ── Startups ───────────────────────────────────────────────────────────────
+    match /startups/{startupId} {
+      allow read:   if isAuth();
+      allow create: if isAuth();
+      allow update: if isAdmin() || (isAuth() && resource.data.founderId == request.auth.uid);
+      allow delete: if isAdmin();
+    }
+
+    // ── Mentor Sessions ────────────────────────────────────────────────────────
+    match /mentor_sessions/{sessionId} {
+      allow read:   if isAdmin()
+                    || (isAuth() && resource.data.mentorId   == request.auth.uid)
+                    || (isAuth() && resource.data.studentId  == request.auth.uid);
+      allow create: if isAdminOrTeacher();
+      allow update: if isAdmin()
+                    || (isAuth() && resource.data.mentorId   == request.auth.uid)
+                    || (isAuth() && resource.data.studentId  == request.auth.uid);
+      allow delete: if isAdmin();
+    }
+
+    // ── Mentor Notes ───────────────────────────────────────────────────────────
+    match /mentor_notes/{noteId} {
+      allow read:   if isAdmin()
+                    || (isAuth() && resource.data.mentorId == request.auth.uid)
+                    || (isAuth() && !resource.data.private && resource.data.studentId == request.auth.uid);
+      allow create: if isAdminOrTeacher();
+      allow update: if isAuth() && resource.data.mentorId == request.auth.uid;
+      allow delete: if isAdmin() || (isAuth() && resource.data.mentorId == request.auth.uid);
+    }
+
+    // ── Cohorts ────────────────────────────────────────────────────────────────
+    match /cohorts/{cohortId} {
+      allow read:  if isAuth();
+      allow write: if isAdmin();
     }
   }
 }

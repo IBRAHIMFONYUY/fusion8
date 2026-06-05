@@ -1,0 +1,143 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // =====================================================================
+    // 1. MASTER AUTHORITY HELPERS
+    // =====================================================================
+    
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    // High-Performance Master Bypass: Direct authorization for the CEO account
+    function isMasterAdmin() {
+      return isSignedIn() && (
+        request.auth.uid == "x8rM4ioT6jTMU0rEfy2ujMQ0sFy1" ||
+        request.auth.token.email == "ceo@fusion8.com"
+      );
+    }
+
+    // Role-based authority markers
+    function isAdmin() {
+      return isMasterAdmin() || (isSignedIn() && exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid)));
+    }
+
+    function isApprovedTeacher() {
+      return isAdmin() || (isSignedIn() && exists(/databases/$(database)/documents/approved_teachers/$(request.auth.uid)));
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    // =====================================================================
+    // 2. GLOBAL OVERRIDE (Recursive)
+    // =====================================================================
+
+    match /{allPaths=**} {
+      allow read, write: if isMasterAdmin();
+    }
+
+    // =====================================================================
+    // 3. COLLECTION RULES
+    // =====================================================================
+
+    match /users/{userId} {
+      allow read: if isOwner(userId)
+        || isAdmin()
+        || (isApprovedTeacher() && resource != null && resource.data.mentorId == request.auth.uid);
+      allow create: if isOwner(userId);
+      allow update: if isAdmin() || (isOwner(userId) && request.resource.data.role == resource.data.role);
+    }
+
+    match /roles_admin/{uid} { 
+      allow read: if isSignedIn(); 
+      allow write: if isMasterAdmin(); 
+    }
+    
+    match /approved_teachers/{uid} { 
+      allow read: if isSignedIn(); 
+      allow write: if isAdmin(); 
+    }
+
+    match /teacher_applications/{appId} {
+      allow create: if true;
+      allow read, update, delete: if isAdmin();
+    }
+
+    match /news_updates/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /approved_teacher_emails/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /courses/{courseId} {
+      allow read: if (resource == null)
+        || (resource.data.status == "published")
+        || (isSignedIn() && (resource.data.teacherId == request.auth.uid || isAdmin()))
+        || (isSignedIn() && exists(/databases/$(database)/documents/enrollments/$(request.auth.uid + '_' + courseId)));
+      allow create: if isApprovedTeacher() && request.resource.data.teacherId == request.auth.uid;
+      allow update: if isAdmin() || (isApprovedTeacher() && resource.data.teacherId == request.auth.uid);
+      allow delete: if isAdmin();
+
+      match /modules/{mId} {
+        allow read: if true; 
+        allow write: if isAdmin() || (isApprovedTeacher() && request.resource.data.teacherId == request.auth.uid);
+      }
+      match /lessons/{lId} {
+        allow read: if true;
+        allow write: if isAdmin() || (isApprovedTeacher() && request.resource.data.teacherId == request.auth.uid);
+      }
+    }
+
+    match /broadcasts/{broadcastId} {
+      allow read: if isSignedIn();
+      allow create: if isApprovedTeacher() || isAdmin();
+      allow update, delete: if isAdmin() || (isSignedIn() && resource.data.teacherId == request.auth.uid);
+    }
+
+    match /assignments/{assignmentId} {
+      allow read: if isSignedIn();
+      allow write: if isApprovedTeacher() || isAdmin();
+    }
+
+    match /enrollments/{enrollmentId} {
+      allow create: if isSignedIn() && request.resource.data.studentId == request.auth.uid;
+      allow read: if isAdmin()
+        || (isSignedIn() && (resource == null || resource.data.studentId == request.auth.uid))
+        || (isApprovedTeacher() && resource != null);
+      allow update: if isAdmin() || (isSignedIn() && resource != null && resource.data.studentId == request.auth.uid);
+    }
+
+    match /submissions/{submissionId} {
+      allow create: if isSignedIn() && request.resource.data.studentId == request.auth.uid;
+      allow read: if isAdmin() || (isSignedIn() && (resource == null || resource.data.studentId == request.auth.uid || resource.data.teacherId == request.auth.uid));
+      allow update: if isAdmin() || (isApprovedTeacher() && resource.data.teacherId == request.auth.uid);
+    }
+
+    match /cohort_applications/{appId} {
+      allow create: if true; 
+      allow read, update, delete: if isAdmin() || (isSignedIn() && (resource == null || resource.data.studentId == request.auth.uid));
+    }
+
+    match /notifications/{notificationId} {
+      // Query-Optimized Read Rules: explicitly handle global and owner access for list queries
+      allow read: if isMasterAdmin();
+      allow read: if isSignedIn() && exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid));
+      allow read: if isSignedIn() && (resource == null || resource.data.userId == request.auth.uid || resource.data.global == true);
+      allow create: if isMasterAdmin() || (isSignedIn() && exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid))) || isApprovedTeacher();
+      allow delete: if isMasterAdmin() || (isSignedIn() && exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid))) || (isSignedIn() && resource.data.userId == request.auth.uid);
+    }
+    
+    match /projects/{projectId} {
+      allow read: if true;
+      allow create: if isSignedIn();
+      allow update: if isAdmin() || (isSignedIn() && (resource.data.studentLeadId == request.auth.uid || resource.data.members[request.auth.uid] != null));
+    }
+  }
+}
