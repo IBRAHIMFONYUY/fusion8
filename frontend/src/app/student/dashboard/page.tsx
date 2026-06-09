@@ -260,7 +260,7 @@ export default function StudentDashboardPage() {
               asChild
               variant="outline"
               size="sm"
-              className="bg-white/10 border-white/20 text-white hover:bg-white/20 h-9 w-9 p-0 rounded-lg"
+              className="bg-white/10 border-black/[0.12] text-white hover:bg-white/20 h-9 w-9 p-0 rounded-lg"
             >
               <NextLink href="/student/notifications">
                 <Bell className="h-4 w-4" />
@@ -451,7 +451,7 @@ export default function StudentDashboardPage() {
                     {broadcasts.map((b: any) => (
                       <div
                         key={b.id}
-                        className="p-4 hover:bg-white/10 transition-colors cursor-pointer"
+                        className="p-4 hover:bg-black/[0.05] transition-colors cursor-pointer"
                         onClick={() => (window.location.href = '/student/live')}
                       >
                         <div className="flex justify-between items-start gap-2 mb-1">

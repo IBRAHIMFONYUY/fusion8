@@ -65,15 +65,13 @@ export default function CoursesPage() {
       <Header />
 
       {/* Hero */}
-      <section className="bg-background pt-28 pb-14 border-b border-border/40">
+      <section className="bg-background pt-28 pb-14 border-b border-black/[0.06]">
         <div className="container mx-auto px-4 text-center">
-          <Badge className="mb-5 bg-accent/10 text-accent border-none font-black tracking-widest px-4 py-1.5 uppercase text-[10px]">
-            Technical Curriculum
-          </Badge>
-          <h1 className="text-5xl md:text-7xl font-black tracking-tighter text-foreground uppercase leading-tight mb-4">
+          <p className="section-label">Technical Curriculum</p>
+          <h1 className="text-display text-foreground mb-4">
             The Digital Campus
           </h1>
-          <p className="max-w-2xl mx-auto text-lg text-muted-foreground font-medium leading-relaxed">
+          <p className="max-w-2xl mx-auto text-base text-muted-foreground leading-relaxed">
             Industry-grade engineering skill paths designed to bridge the gap in Cameroon.
           </p>
         </div>
@@ -214,7 +212,7 @@ export default function CoursesPage() {
                               </Badge>
                             )}
                             {(course as any).level && (
-                              <Badge variant="outline" className="border-white/40 text-white text-[9px] font-bold uppercase tracking-wider px-2 py-0.5">
+                              <Badge variant="outline" className="border-black/[0.15] text-white text-[9px] font-bold uppercase tracking-wider px-2 py-0.5">
                                 {(course as any).level}
                               </Badge>
                             )}
@@ -244,7 +242,7 @@ export default function CoursesPage() {
                       </CardContent>
 
                       <CardFooter className="pb-6 px-6">
-                        <Button asChild className="w-full h-12 rounded-2xl font-black bg-accent hover:bg-accent/90 text-white shadow-sm transition-all">
+                        <Button asChild className="w-full h-12 rounded-xl font-bold bg-accent hover:bg-orange-600 text-white shadow-lg shadow-accent/20 transition-all">
                           <Link href={`/courses/${course.id}`}>
                             View Course <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-0.5 transition-transform" />
                           </Link>

@@ -290,7 +290,7 @@ export default function TeacherDashboardPage() {
                     <CardDescription className="text-neutral-400 font-medium italic">Verified identity & credentials.</CardDescription>
                 </CardHeader>
                 <CardContent className="relative z-10 space-y-6">
-                    <div className="p-5 bg-white/5 rounded-3xl border border-white/10 flex items-center gap-4">
+                    <div className="p-5 bg-white/5 rounded-3xl border border-black/[0.08] flex items-center gap-4">
                         <div className="h-14 w-14 rounded-full bg-accent/20 flex items-center justify-center border border-accent/20 overflow-hidden shadow-xl">
                             <img src={user?.photoURL || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.uid}`} alt="Profile" className="w-full h-full object-cover" />
                         </div>

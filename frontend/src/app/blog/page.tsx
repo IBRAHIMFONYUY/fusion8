@@ -47,14 +47,14 @@ export default function BlogPage() {
       <main className="flex-1 bg-secondary">
 
         {/* Hero */}
-        <section className="bg-primary text-white py-20">
+        <section className="bg-background pt-28 pb-14 border-b border-black/[0.06]">
           <div className="container mx-auto px-4 text-center">
-            <p className="text-accent text-xs font-bold uppercase tracking-widest mb-3">Fusion8 Blog</p>
-            <h1 className="text-4xl md:text-6xl font-black font-headline tracking-tighter uppercase mb-4">
+            <p className="section-label">Fusion 8 Blog</p>
+            <h1 className="text-display text-foreground mb-4">
               Engineering Stories
             </h1>
-            <p className="text-neutral-400 max-w-xl mx-auto text-lg">
-              Insights, tutorials, and news from Cameroon's hardware engineering frontier.
+            <p className="text-muted-foreground max-w-xl mx-auto text-base leading-relaxed">
+              Insights, tutorials, and news from Cameroon&apos;s hardware engineering frontier.
             </p>
           </div>
         </section>

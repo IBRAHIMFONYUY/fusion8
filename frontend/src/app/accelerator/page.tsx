@@ -44,7 +44,7 @@ export default function AcceleratorPage() {
       <Header />
 
       {/* Hero */}
-      <section className="relative pt-32 pb-20 border-b border-white/[0.06] overflow-hidden">
+      <section className="relative pt-32 pb-20 border-b border-black/[0.06] overflow-hidden">
         <div className="absolute inset-0 pointer-events-none">
           <Image src={IMAGES.manufacturingLine} alt="" fill className="object-cover opacity-[0.07]" />
           <div className="absolute inset-0 bg-background/93" />
@@ -53,23 +53,23 @@ export default function AcceleratorPage() {
         <div className="container mx-auto px-4 text-center relative z-10">
           <p className="text-xs font-black uppercase tracking-[0.25em] text-accent mb-5">Product Accelerator</p>
           <h1 className="text-display text-foreground mb-6 max-w-3xl mx-auto">Helping Innovators Move Beyond Prototypes.</h1>
-          <p className="text-base md:text-lg max-w-2xl mx-auto mb-10" style={{ color: 'rgba(246,245,242,0.55)' }}>
+          <p className="text-base md:text-lg max-w-2xl mx-auto mb-10" style={{ color: 'rgba(100,116,139,0.85)' }}>
             At Fusion 8, "done" doesn't mean built a prototype. Done means
             manufactured. Distributed. Sold.
           </p>
-          <div className="inline-flex items-center gap-2 border border-white/15 rounded-full px-5 py-2 text-sm font-semibold" style={{ color: 'rgba(246,245,242,0.50)' }}>
+          <div className="inline-flex items-center gap-2 border border-black/[0.10] rounded-full px-5 py-2 text-sm font-semibold" style={{ color: 'rgba(100,116,139,0.80)' }}>
             Open to Incubator graduates with Grade A or A+ · Coming 2027
           </div>
         </div>
       </section>
 
       {/* Manufacturing pipeline */}
-      <section className="bg-[#070A0C] border-b border-white/[0.06]">
+      <section className="bg-[#F3F4F6] border-b border-black/[0.06]">
         <div className="container mx-auto px-4 py-20 md:py-28">
           <div className="text-center mb-14">
             <p className="text-xs font-black uppercase tracking-[0.25em] text-accent mb-4">The Manufacturing Pathway</p>
             <h2 className="text-section text-foreground mb-4">From Prototype to Market.</h2>
-            <p className="text-base max-w-xl mx-auto" style={{ color: 'rgba(246,245,242,0.50)' }}>
+            <p className="text-base max-w-xl mx-auto" style={{ color: 'rgba(100,116,139,0.80)' }}>
               This is what makes Fusion 8 different from every other incubator.
               We don't stop at prototypes.
             </p>
@@ -88,13 +88,13 @@ export default function AcceleratorPage() {
                     {!isLast && <div className="w-px flex-1 my-2" style={{ background: 'linear-gradient(to bottom, rgba(228,77,40,0.4), rgba(228,77,40,0.1))' }} />}
                   </div>
                   <div className={`pb-8 flex-1 ${isLast ? '' : ''}`}>
-                    <div className={`bg-card border rounded-2xl p-5 hover:border-accent/25 transition-all ${isLast ? 'border-accent/30 bg-accent/[0.05]' : 'border-white/[0.07]'}`}>
+                    <div className={`bg-card border rounded-2xl p-5 hover:border-accent/25 transition-all ${isLast ? 'border-accent/30 bg-accent/[0.05]' : 'border-black/[0.06]'}`}>
                       <div className="flex items-center gap-3 mb-1.5">
                         <span className="text-[10px] font-black uppercase tracking-widest font-mono" style={{ color: 'rgba(228,77,40,0.60)' }}>Stage {String(i + 1).padStart(2, '0')}</span>
                         {isLast && <span className="text-[9px] font-black uppercase tracking-widest bg-accent text-white px-2 py-0.5 rounded-full">Goal</span>}
                       </div>
                       <h3 className={`text-sm font-black mb-1 ${isLast ? 'text-accent' : 'text-foreground'}`}>{stage.title}</h3>
-                      <p className="text-xs leading-relaxed" style={{ color: 'rgba(246,245,242,0.50)' }}>{stage.desc}</p>
+                      <p className="text-xs leading-relaxed" style={{ color: 'rgba(100,116,139,0.80)' }}>{stage.desc}</p>
                     </div>
                   </div>
                 </div>
@@ -113,27 +113,27 @@ export default function AcceleratorPage() {
               <h2 className="text-section text-foreground mb-6">Full Stack Support. From MVP to Market.</h2>
               <ul className="space-y-3">
                 {WHAT_YOU_RECEIVE.map(item => (
-                  <li key={item} className="flex items-start gap-3 text-sm" style={{ color: 'rgba(246,245,242,0.70)' }}>
+                  <li key={item} className="flex items-start gap-3 text-sm" style={{ color: 'rgba(51,65,85,0.80)' }}>
                     <Check className="h-4 w-4 text-accent shrink-0 mt-0.5" />{item}
                   </li>
                 ))}
               </ul>
             </div>
             <div className="space-y-4">
-              <div className="bg-card border border-white/[0.07] rounded-2xl p-6">
+              <div className="bg-card border border-black/[0.06] rounded-2xl p-6">
                 <p className="text-[10px] font-black uppercase tracking-widest text-accent mb-3">Equity Terms</p>
                 <p className="text-4xl font-black text-foreground mb-1">2–5<span className="text-xl">%</span></p>
-                <p className="text-sm" style={{ color: 'rgba(246,245,242,0.50)' }}>Negotiated equity in exchange for commercialization support, lab access, and market development. Agreed in writing before acceleration begins.</p>
+                <p className="text-sm" style={{ color: 'rgba(100,116,139,0.80)' }}>Negotiated equity in exchange for commercialization support, lab access, and market development. Agreed in writing before acceleration begins.</p>
               </div>
-              <div className="bg-card border border-white/[0.07] rounded-2xl p-6">
+              <div className="bg-card border border-black/[0.06] rounded-2xl p-6">
                 <p className="text-[10px] font-black uppercase tracking-widest text-accent mb-3">Duration</p>
-                <p className="text-4xl font-black text-foreground mb-1">3 <span className="text-xl font-semibold" style={{ color: 'rgba(246,245,242,0.50)' }}>months</span></p>
-                <p className="text-sm" style={{ color: 'rgba(246,245,242,0.50)' }}>Standard acceleration track. Extended to 6 months for hardware-heavy products requiring manufacturing setup.</p>
+                <p className="text-4xl font-black text-foreground mb-1">3 <span className="text-xl font-semibold" style={{ color: 'rgba(100,116,139,0.80)' }}>months</span></p>
+                <p className="text-sm" style={{ color: 'rgba(100,116,139,0.80)' }}>Standard acceleration track. Extended to 6 months for hardware-heavy products requiring manufacturing setup.</p>
               </div>
               <div className="bg-card border border-accent/20 rounded-2xl p-6">
                 <p className="text-[10px] font-black uppercase tracking-widest text-accent mb-3">Entry Requirement</p>
                 <p className="text-2xl font-black text-foreground mb-1">Grade A or A+</p>
-                <p className="text-sm" style={{ color: 'rgba(246,245,242,0.50)' }}>Innovation Readiness Score of 75 or above from the Incubator. Your product must be validated with real users.</p>
+                <p className="text-sm" style={{ color: 'rgba(100,116,139,0.80)' }}>Innovation Readiness Score of 75 or above from the Incubator. Your product must be validated with real users.</p>
               </div>
             </div>
           </div>
@@ -155,12 +155,12 @@ export default function AcceleratorPage() {
       </section>
 
       {/* Revenue model */}
-      <section className="bg-[#070A0C] border-y border-white/[0.06]">
+      <section className="bg-[#F3F4F6] border-y border-black/[0.06]">
         <div className="container mx-auto px-4 py-20">
           <div className="text-center mb-12">
             <p className="text-xs font-black uppercase tracking-[0.25em] text-accent mb-4">Fusion 8 Revenue Model</p>
             <h2 className="text-section text-foreground mb-4">7 Revenue Streams. Built to Last.</h2>
-            <p className="text-base max-w-xl mx-auto" style={{ color: 'rgba(246,245,242,0.48)' }}>
+            <p className="text-base max-w-xl mx-auto" style={{ color: 'rgba(100,116,139,0.75)' }}>
               Fusion 8 is designed to generate sustainable revenue while delivering maximum impact.
             </p>
           </div>
@@ -168,15 +168,15 @@ export default function AcceleratorPage() {
             {REVENUE_STREAMS.map(r => {
               const isActive = r.status.includes('Active');
               return (
-                <div key={r.n} className={`bg-card border rounded-2xl p-5 hover:border-accent/25 transition-all ${isActive ? 'border-accent/20' : 'border-white/[0.07]'}`}>
+                <div key={r.n} className={`bg-card border rounded-2xl p-5 hover:border-accent/25 transition-all ${isActive ? 'border-accent/20' : 'border-black/[0.06]'}`}>
                   <div className="flex items-center justify-between mb-3">
                     <span className="text-[10px] font-black font-mono text-accent/60">{r.n}</span>
-                    <span className={`text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full ${isActive ? 'bg-accent text-white' : 'bg-white/[0.06]'}`} style={{ color: isActive ? undefined : 'rgba(246,245,242,0.38)' }}>
+                    <span className={`text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full ${isActive ? 'bg-accent text-white' : 'bg-black/[0.04]'}`} style={{ color: isActive ? undefined : 'rgba(246,245,242,0.38)' }}>
                       {r.status}
                     </span>
                   </div>
                   <h3 className="text-sm font-black text-foreground mb-1.5">{r.title}</h3>
-                  <p className="text-xs leading-relaxed" style={{ color: 'rgba(246,245,242,0.48)' }}>{r.desc}</p>
+                  <p className="text-xs leading-relaxed" style={{ color: 'rgba(100,116,139,0.75)' }}>{r.desc}</p>
                 </div>
               );
             })}
@@ -192,7 +192,7 @@ export default function AcceleratorPage() {
             The Path Starts at the Academy.
           </h2>
           <p className="text-white/70 mb-8 max-w-lg mx-auto">Apply for Cohort 01. Graduate. Build your prototype. Then we accelerate together.</p>
-          <Button asChild size="lg" className="bg-[#0A0E10] hover:bg-black text-white font-black h-13 px-9 rounded-xl shadow-2xl shadow-black/40">
+          <Button asChild size="lg" className="bg-[#0A0E10] hover:bg-black text-white font-bold h-12 px-7 rounded-xl shadow-2xl shadow-black/40 transition-all">
             <Link href="/apply">Apply for Cohort 01 <ArrowRight className="ml-2 h-4 w-4" /></Link>
           </Button>
         </div>

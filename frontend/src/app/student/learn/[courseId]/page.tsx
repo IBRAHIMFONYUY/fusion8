@@ -224,7 +224,7 @@ function LearnPlayerContent() {
                 <Accordion type="multiple" defaultValue={modulesList?.map(m => `item-${m.id}`)} className="w-full">
                   {modulesList?.map((module) => (
                     <AccordionItem value={`item-${module.id}`} key={module.id} className="border-b border-white/5">
-                      <AccordionTrigger className="px-6 py-5 font-bold text-[11px] uppercase tracking-wider text-primary-foreground/80 hover:no-underline hover:bg-white/5 transition-colors">
+                      <AccordionTrigger className="px-6 py-5 font-bold text-[11px] uppercase tracking-wider text-primary-foreground/80 hover:no-underline hover:bg-black/[0.03] transition-colors">
                         {module.title}
                       </AccordionTrigger>
                       <AccordionContent className="pb-0 bg-black/20">
@@ -238,7 +238,7 @@ function LearnPlayerContent() {
                                     "flex items-center gap-3 px-6 py-5 text-[11px] transition-all border-l-4",
                                     l.id === activeLessonId 
                                       ? "bg-accent/20 border-accent text-white font-black" 
-                                      : "border-transparent hover:bg-white/5 text-primary-foreground/40"
+                                      : "border-transparent hover:bg-black/[0.03] text-primary-foreground/40"
                                   )}>
                                     {lessonIsDone ? (
                                       <CheckCircle className="h-4 w-4 shrink-0 text-green-500" />

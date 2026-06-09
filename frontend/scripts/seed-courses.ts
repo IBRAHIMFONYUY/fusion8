@@ -25,7 +25,7 @@ const COURSES = [
     id: 'course-solidworks-001',
     title: 'SolidWorks for Engineers',
     description: 'Master 3D CAD design for mechanical and product engineering. Design parts, assemblies, and technical drawings used in real industry projects.',
-    longDescription: 'This course covers the full SolidWorks workflow from sketch to final assembly drawing — the same process used in Cameroon's growing manufacturing and automotive sectors.',
+    longDescription: 'This course covers the full SolidWorks workflow from sketch to final assembly drawing — the same process used in Cameroon\'s growing manufacturing and automotive sectors.',
     category: 'SolidWorks',
     level: 'Beginner',
     price: 5000,

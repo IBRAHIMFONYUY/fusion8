@@ -222,7 +222,7 @@ export default function StudentProfilePage() {
               asChild
               variant="outline"
               size="sm"
-              className="bg-white/10 border-white/20 text-white hover:bg-white/20 shrink-0 h-9 px-4 rounded-xl"
+              className="bg-white/10 border-black/[0.12] text-white hover:bg-white/20 shrink-0 h-9 px-4 rounded-xl"
             >
               <NextLink href="/student/settings">Edit Profile</NextLink>
             </Button>

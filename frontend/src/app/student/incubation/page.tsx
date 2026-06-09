@@ -386,7 +386,7 @@ function NoStartupView({
       {/* Hero */}
       <div className="bg-primary text-white rounded-2xl p-8 md:p-12 relative overflow-hidden">
         <div className="relative z-10 max-w-2xl space-y-5">
-          <div className="inline-flex items-center gap-2 bg-white/10 border border-white/20 rounded-full px-4 py-1.5 text-sm font-semibold tracking-wide">
+          <div className="inline-flex items-center gap-2 bg-white/10 border border-black/[0.12] rounded-full px-4 py-1.5 text-sm font-semibold tracking-wide">
             <Rocket className="h-4 w-4 text-accent" />
             FUSION8 Incubation Program
           </div>
@@ -413,7 +413,7 @@ function NoStartupView({
               asChild
               size="lg"
               variant="outline"
-              className="bg-white/10 border-white/20 text-white hover:bg-white/20 h-12 px-8 rounded-xl"
+              className="bg-white/10 border-black/[0.12] text-white hover:bg-white/20 h-12 px-8 rounded-xl"
             >
               <NextLink href="/student/projects">
                 Browse Projects
@@ -681,7 +681,7 @@ function StartupCommandCenter({
             <div className="space-y-1">
               <div className="flex flex-wrap items-center gap-2 mb-2">
                 <Badge
-                  className="capitalize text-xs border bg-white/15 border-white/20 text-white"
+                  className="capitalize text-xs border bg-white/15 border-black/[0.12] text-white"
                   variant="outline"
                 >
                   {stageLabel(startup.stage)}

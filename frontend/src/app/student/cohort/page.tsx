@@ -454,7 +454,7 @@ export default function StudentCohortPage() {
               {cohort.location && (
                 <Badge
                   variant="outline"
-                  className="bg-white/10 border-white/20 text-white/80 text-[11px] font-semibold px-2.5 py-0.5"
+                  className="bg-white/10 border-black/[0.12] text-white/80 text-[11px] font-semibold px-2.5 py-0.5"
                 >
                   <MapPin className="h-2.5 w-2.5 mr-1" />
                   {cohort.location.charAt(0).toUpperCase() + cohort.location.slice(1)}
@@ -475,7 +475,7 @@ export default function StudentCohortPage() {
           </div>
 
           {/* Student identity */}
-          <div className="shrink-0 bg-white/10 border border-white/15 rounded-2xl px-5 py-4 space-y-2 min-w-[170px]">
+          <div className="shrink-0 bg-white/10 border border-black/[0.10] rounded-2xl px-5 py-4 space-y-2 min-w-[170px]">
             <p className="text-[10px] font-bold text-white/50 uppercase tracking-widest">
               Cohort Member
             </p>

@@ -5,7 +5,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { signInUser, signUpUser, signInWithGoogle, UserRole } from '@/lib/auth';
+import { signInUser, signUpUser, signInWithGoogle, adminResetUserPassword, UserRole } from '@/lib/auth';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -63,6 +63,23 @@ export function AuthForm() {
       toast({ variant: "destructive", title: "Error", description: "Could not connect to Google services." });
       setIsPending(false);
     }
+  };
+
+  const handleForgotPassword = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    const currentEmail = form.getValues('email');
+    if (!currentEmail || !/^\S+@\S+\.\S+$/.test(currentEmail)) {
+      toast({ variant: 'destructive', title: 'Email required', description: 'Please enter a valid email address first to reset your password.' });
+      return;
+    }
+    setIsPending(true);
+    const result = await adminResetUserPassword(currentEmail);
+    if (result.success) {
+      toast({ title: 'Reset Link Sent', description: 'Check your email for password reset instructions.' });
+    } else {
+      toast({ variant: 'destructive', title: 'Reset Failed', description: (result as any).error });
+    }
+    setIsPending(false);
   };
 
   const onSubmit = async (values: AuthValues) => {
@@ -170,7 +187,17 @@ export function AuthForm() {
                   name="password"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Access Password</FormLabel>
+                      <div className="flex items-center justify-between">
+                        <FormLabel>Access Password</FormLabel>
+                        <button
+                          type="button"
+                          onClick={handleForgotPassword}
+                          disabled={isPending}
+                          className="text-xs font-medium text-muted-foreground hover:text-accent transition-colors"
+                        >
+                          Forgot password?
+                        </button>
+                      </div>
                       <FormControl>
                         <Input type="password" placeholder="••••••••" {...field} className="h-11" disabled={isPending} />
                       </FormControl>

@@ -290,7 +290,7 @@ export default function AdminCoursesPage() {
                     </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                    <AlertDialogCancel className="bg-white/10 border-white/20 text-white hover:bg-white/20 hover:text-white">Abort</AlertDialogCancel>
+                    <AlertDialogCancel className="bg-white/10 border-black/[0.12] text-white hover:bg-white/20 hover:text-white">Abort</AlertDialogCancel>
                     <AlertDialogAction 
                         onClick={handleDeleteCourse} 
                         className="bg-white text-destructive hover:bg-neutral-200 font-black"

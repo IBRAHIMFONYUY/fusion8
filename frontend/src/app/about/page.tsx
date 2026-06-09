@@ -38,7 +38,7 @@ export default function AboutPage() {
       <Header />
 
       {/* Hero */}
-      <section className="relative pt-32 pb-20 border-b border-white/[0.06] overflow-hidden">
+      <section className="relative pt-32 pb-20 border-b border-black/[0.06] overflow-hidden">
         <div className="absolute inset-0 pointer-events-none">
           <Image src={IMAGES.teamWorking} alt="" fill className="object-cover opacity-[0.08]" />
           <div className="absolute inset-0 bg-background/90" />
@@ -49,32 +49,32 @@ export default function AboutPage() {
           <h1 className="text-display text-foreground mb-6 max-w-4xl mx-auto">
             Fusion 8 is building the infrastructure, talent, and innovation pipeline required to transform African ideas into globally competitive products.
           </h1>
-          <p className="text-base md:text-lg max-w-2xl mx-auto" style={{ color: 'rgba(246,245,242,0.55)' }}>
+          <p className="text-base md:text-lg max-w-2xl mx-auto" style={{ color: 'rgba(100,116,139,0.85)' }}>
             Based in Bamenda, Northwest Region, Cameroon. Founded 2026. Cohort 01.
           </p>
         </div>
       </section>
 
       {/* What we are / are not */}
-      <section className="bg-[#070A0C] border-b border-white/[0.06]">
+      <section className="bg-[#F3F4F6] border-b border-black/[0.06]">
         <div className="container mx-auto px-4 py-20">
           <div className="grid md:grid-cols-2 gap-10 max-w-4xl mx-auto">
             <div>
               <p className="text-xs font-black uppercase tracking-[0.2em] text-accent mb-5">Fusion 8 Is</p>
               <ul className="space-y-3">
                 {['A hardtech innovation ecosystem', 'A product acceleration platform', 'A talent development engine', 'A startup launchpad', 'The bridge between engineering education and industrial innovation'].map(s => (
-                  <li key={s} className="flex items-start gap-3 text-sm" style={{ color: 'rgba(246,245,242,0.72)' }}>
+                  <li key={s} className="flex items-start gap-3 text-sm" style={{ color: 'rgba(51,65,85,0.85)' }}>
                     <span className="text-accent font-black mt-0.5">✓</span> {s}
                   </li>
                 ))}
               </ul>
             </div>
             <div>
-              <p className="text-xs font-black uppercase tracking-[0.2em] mb-5" style={{ color: 'rgba(246,245,242,0.35)' }}>Fusion 8 Is Not</p>
+              <p className="text-xs font-black uppercase tracking-[0.2em] mb-5" style={{ color: 'rgba(100,116,139,0.50)' }}>Fusion 8 Is Not</p>
               <ul className="space-y-3">
                 {['A robotics club', 'A coding bootcamp', 'A student association', 'An event organization', 'A traditional training center'].map(s => (
-                  <li key={s} className="flex items-start gap-3 text-sm" style={{ color: 'rgba(246,245,242,0.38)' }}>
-                    <span className="mt-0.5 font-black" style={{ color: 'rgba(246,245,242,0.25)' }}>✕</span> {s}
+                  <li key={s} className="flex items-start gap-3 text-sm" style={{ color: 'rgba(100,116,139,0.55)' }}>
+                    <span className="mt-0.5 font-black" style={{ color: 'rgba(100,116,139,0.35)' }}>✕</span> {s}
                   </li>
                 ))}
               </ul>
@@ -103,16 +103,16 @@ export default function AboutPage() {
           <div className="text-center mb-14">
             <p className="text-xs font-black uppercase tracking-[0.25em] text-accent mb-4">The Founder Journey</p>
             <h2 className="text-section text-foreground mb-4">12 Stages from Student to Founder.</h2>
-            <p className="text-base max-w-xl mx-auto" style={{ color: 'rgba(246,245,242,0.50)' }}>
+            <p className="text-base max-w-xl mx-auto" style={{ color: 'rgba(100,116,139,0.80)' }}>
               Every graduate starts at Stage 01. The pipeline does the rest.
             </p>
           </div>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 max-w-5xl mx-auto">
             {JOURNEY.map((j, i) => (
-              <div key={j.stage} className={`relative bg-card border rounded-2xl p-6 hover:border-accent/25 transition-all group ${i === 0 ? 'border-accent/25 bg-accent/[0.04]' : 'border-white/[0.07]'}`}>
-                <div className="text-5xl font-black font-mono mb-3 leading-none" style={{ color: i === 0 ? 'rgba(228,77,40,0.35)' : 'rgba(246,245,242,0.08)' }}>{j.stage}</div>
+              <div key={j.stage} className={`relative bg-card border rounded-2xl p-6 hover:border-accent/25 transition-all group ${i === 0 ? 'border-accent/25 bg-accent/[0.04]' : 'border-black/[0.06]'}`}>
+                <div className="text-5xl font-black font-mono mb-3 leading-none" style={{ color: i === 0 ? 'rgba(228,77,40,0.35)' : 'rgba(100,116,139,0.15)' }}>{j.stage}</div>
                 <h3 className={`text-sm font-black mb-1.5 ${i === 0 ? 'text-accent' : 'text-foreground'}`}>{j.title}</h3>
-                <p className="text-xs leading-relaxed" style={{ color: 'rgba(246,245,242,0.48)' }}>{j.desc}</p>
+                <p className="text-xs leading-relaxed" style={{ color: 'rgba(100,116,139,0.75)' }}>{j.desc}</p>
               </div>
             ))}
           </div>
@@ -120,7 +120,7 @@ export default function AboutPage() {
       </section>
 
       {/* Core values */}
-      <section className="bg-[#070A0C] border-y border-white/[0.06]">
+      <section className="bg-[#F3F4F6] border-y border-black/[0.06]">
         <div className="container mx-auto px-4 py-20">
           <div className="text-center mb-12">
             <p className="text-xs font-black uppercase tracking-[0.25em] text-accent mb-4">Core Values</p>
@@ -130,12 +130,12 @@ export default function AboutPage() {
             {VALUES.map(v => {
               const Icon = v.icon;
               return (
-                <div key={v.title} className="bg-card border border-white/[0.07] hover:border-accent/20 rounded-2xl p-6 transition-all">
+                <div key={v.title} className="bg-card border border-black/[0.06] hover:border-accent/20 rounded-2xl p-6 transition-all">
                   <div className="w-9 h-9 bg-accent/10 rounded-xl flex items-center justify-center mb-4">
                     <Icon className="h-4.5 w-4.5 text-accent" />
                   </div>
                   <h3 className="text-sm font-black text-foreground mb-1.5">{v.title}</h3>
-                  <p className="text-xs leading-relaxed" style={{ color: 'rgba(246,245,242,0.50)' }}>{v.desc}</p>
+                  <p className="text-xs leading-relaxed" style={{ color: 'rgba(100,116,139,0.80)' }}>{v.desc}</p>
                 </div>
               );
             })}
@@ -157,9 +157,9 @@ export default function AboutPage() {
               { q: 'What about IP and patents?', a: 'We help founders document and protect their intellectual property. Fusion 8 does not claim patent ownership — we support the filing process.' },
               { q: 'Can a founder leave at any time?', a: 'Yes. The Academy and Incubator are open-access. The only binding agreement begins at the Accelerator stage, when equity and services are formally contracted.' },
             ].map(item => (
-              <div key={item.q} className="bg-card border border-white/[0.07] hover:border-accent/15 rounded-2xl p-6 transition-all">
+              <div key={item.q} className="bg-card border border-black/[0.06] hover:border-accent/15 rounded-2xl p-6 transition-all">
                 <h3 className="text-sm font-black text-foreground mb-2">{item.q}</h3>
-                <p className="text-sm leading-relaxed" style={{ color: 'rgba(246,245,242,0.58)' }}>{item.a}</p>
+                <p className="text-sm leading-relaxed" style={{ color: 'rgba(100,116,139,0.85)' }}>{item.a}</p>
               </div>
             ))}
           </div>
@@ -174,7 +174,7 @@ export default function AboutPage() {
             "By 2032, Fusion 8 will be Africa's leading hardtech product acceleration ecosystem."
           </h2>
           <p className="text-white/70 mb-8 max-w-lg mx-auto">Your decision to apply today is the first step in that future.</p>
-          <Button asChild size="lg" className="bg-[#0A0E10] hover:bg-black text-white font-black h-13 px-8 rounded-xl shadow-2xl shadow-black/40">
+          <Button asChild size="lg" className="bg-[#0A0E10] hover:bg-black text-white font-black h-12 px-7 rounded-xl shadow-2xl shadow-black/40">
             <Link href="/apply">Apply for Cohort 01 <ArrowRight className="ml-2 h-4 w-4" /></Link>
           </Button>
         </div>

@@ -131,7 +131,7 @@ export default function StudentCoursePage() {
                     </Link>
                   </Button>
                 ) : (
-                  <div className="mt-8 p-4 bg-white/5 border border-white/10 rounded-xl text-sm italic text-neutral-400 max-w-sm">
+                  <div className="mt-8 p-4 bg-white/5 border border-black/[0.08] rounded-xl text-sm italic text-neutral-400 max-w-sm">
                     The instructor is currently uploading the curriculum content. Please check back shortly.
                   </div>
                 )}

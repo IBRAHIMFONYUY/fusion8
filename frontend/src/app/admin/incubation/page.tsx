@@ -909,7 +909,7 @@ export default function AdminIncubationPage() {
                 ].map((item) => (
                   <div
                     key={item.title}
-                    className="p-4 bg-white/5 border border-white/10 rounded-xl"
+                    className="p-4 bg-white/5 border border-black/[0.08] rounded-xl"
                   >
                     <item.icon className="h-5 w-5 text-accent mb-2" />
                     <p className="font-extrabold text-sm leading-tight mb-1">{item.title}</p>

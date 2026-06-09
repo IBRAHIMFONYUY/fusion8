@@ -24,9 +24,9 @@ const platformLinks = [
 
 export function Footer() {
   return (
-    <footer className="bg-[#070A0C] border-t border-white/[0.06]">
+    <footer className="bg-white border-t border-black/[0.06]">
       {/* Top gradient line */}
-      <div className="h-px bg-gradient-to-r from-transparent via-accent/60 to-transparent" />
+      <div className="h-px bg-gradient-to-r from-transparent via-accent/40 to-transparent" />
 
       <div className="container mx-auto px-4 py-16 md:py-20">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-12">
@@ -42,26 +42,25 @@ export function Footer() {
               </span>
             </Link>
 
-            <p className="text-sm leading-relaxed" style={{ color: 'rgba(246,245,242,0.55)' }}>
-              Africa's hardtech innovation ecosystem. Building the talent, systems,
+            <p className="text-sm leading-relaxed text-muted-foreground">
+              Africa&apos;s hardtech innovation ecosystem. Building the talent, systems,
               and infrastructure required to turn African ideas into globally
               competitive products.
             </p>
 
             <p className="text-xs font-black tracking-[0.2em] uppercase text-accent">
-              Build. Don't Just Learn.
+              Build. Don&apos;t Just Learn.
             </p>
 
             <div className="flex flex-col gap-2.5 pt-1">
               <a
                 href="mailto:fusion8.cohort01@gmail.com"
-                className="flex items-center gap-2 text-sm hover:text-white transition-colors"
-                style={{ color: 'rgba(246,245,242,0.55)' }}
+                className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
               >
                 <Mail className="h-3.5 w-3.5 text-accent shrink-0" />
                 fusion8.cohort01@gmail.com
               </a>
-              <div className="flex items-center gap-2 text-sm" style={{ color: 'rgba(246,245,242,0.55)' }}>
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <MapPin className="h-3.5 w-3.5 text-accent shrink-0" />
                 Bamenda, Northwest Region, Cameroon
               </div>
@@ -69,8 +68,7 @@ export function Footer() {
                 href="https://chat.whatsapp.com/LflIGcSgE0AKgGlBmL01fD"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-2 text-sm hover:text-white transition-colors"
-                style={{ color: 'rgba(246,245,242,0.55)' }}
+                className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
               >
                 <MessageCircle className="h-3.5 w-3.5 text-accent shrink-0" />
                 Join WhatsApp Community
@@ -86,7 +84,7 @@ export function Footer() {
             <ul className="space-y-2.5">
               {ecosystemLinks.map(({ href, label }) => (
                 <li key={label}>
-                  <Link href={href} className="text-sm transition-colors hover:text-white" style={{ color: 'rgba(246,245,242,0.55)' }}>
+                  <Link href={href} className="text-sm text-muted-foreground transition-colors hover:text-foreground">
                     {label}
                   </Link>
                 </li>
@@ -102,7 +100,7 @@ export function Footer() {
             <ul className="space-y-2.5">
               {communityLinks.map(({ href, label }) => (
                 <li key={label}>
-                  <Link href={href} className="text-sm transition-colors hover:text-white" style={{ color: 'rgba(246,245,242,0.55)' }}>
+                  <Link href={href} className="text-sm text-muted-foreground transition-colors hover:text-foreground">
                     {label}
                   </Link>
                 </li>
@@ -118,7 +116,7 @@ export function Footer() {
             <ul className="space-y-2.5">
               {platformLinks.map(({ href, label }) => (
                 <li key={label}>
-                  <Link href={href} className="text-sm transition-colors hover:text-white" style={{ color: 'rgba(246,245,242,0.55)' }}>
+                  <Link href={href} className="text-sm text-muted-foreground transition-colors hover:text-foreground">
                     {label}
                   </Link>
                 </li>
@@ -128,15 +126,15 @@ export function Footer() {
         </div>
 
         {/* Bottom bar */}
-        <div className="mt-14 pt-8 border-t border-white/[0.07] flex flex-col md:flex-row justify-between items-center gap-4">
-          <p className="text-xs" style={{ color: 'rgba(246,245,242,0.30)' }}>
+        <div className="mt-14 pt-8 border-t border-black/[0.06] flex flex-col md:flex-row justify-between items-center gap-4">
+          <p className="text-xs text-muted-foreground/60">
             © {new Date().getFullYear()} Fusion 8 Innovation Ecosystem · Cohort 01 · 2026
           </p>
           <div className="flex gap-6">
-            <Link href="/" className="text-xs hover:text-white transition-colors" style={{ color: 'rgba(246,245,242,0.30)' }}>
+            <Link href="/" className="text-xs text-muted-foreground/60 hover:text-foreground transition-colors">
               Privacy Policy
             </Link>
-            <Link href="/" className="text-xs hover:text-white transition-colors" style={{ color: 'rgba(246,245,242,0.30)' }}>
+            <Link href="/" className="text-xs text-muted-foreground/60 hover:text-foreground transition-colors">
               Terms of Service
             </Link>
           </div>
@@ -148,7 +146,7 @@ export function Footer() {
         href="https://chat.whatsapp.com/LflIGcSgE0AKgGlBmL01fD"
         target="_blank"
         rel="noopener noreferrer"
-        className="fixed bottom-6 right-6 z-50 w-14 h-14 bg-[#25D366] hover:bg-[#20BD5A] rounded-full flex items-center justify-center shadow-2xl shadow-black/40 transition-all hover:scale-110 hover:shadow-[#25D366]/30"
+        className="fixed bottom-6 right-6 z-50 w-14 h-14 bg-[#25D366] hover:bg-[#20BD5A] rounded-full flex items-center justify-center shadow-2xl shadow-black/20 transition-all hover:scale-110 hover:shadow-[#25D366]/30"
         aria-label="Join WhatsApp community"
       >
         <svg viewBox="0 0 24 24" className="w-7 h-7 fill-white">

@@ -7,6 +7,7 @@ import {
   signInWithPopup,
   GoogleAuthProvider,
   sendPasswordResetEmail,
+  sendEmailVerification,
   AuthError
 } from 'firebase/auth';
 import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
@@ -83,6 +84,12 @@ export async function signUpUser(email: string, password: string, name: string, 
     // Ensure markers exist BEFORE returning success to the provider
     await ensureSecurityMarkers(user.uid, finalRole, isApproved, normalizedEmail);
     await setDoc(doc(firestore, 'users', user.uid), userProfile);
+    
+    try {
+      await sendEmailVerification(user);
+    } catch (err) {
+      console.error('Failed to send verification email', err);
+    }
     
     return { success: true, uid: user.uid, role: finalRole, approved: isApproved };
   } catch (error: any) {

@@ -159,7 +159,7 @@ export default function TeacherSchedulePage() {
                         <div className="space-y-2">
                             <Label htmlFor="course">Target Course</Label>
                              <Select value={course} onValueChange={setCourse}>
-                                <SelectTrigger id="course" className="bg-white/5 border-white/10">
+                                <SelectTrigger id="course" className="bg-white/5 border-black/[0.08]">
                                     <SelectValue placeholder="Choose curriculum" />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -170,18 +170,18 @@ export default function TeacherSchedulePage() {
                         </div>
                          <div className="space-y-2">
                             <Label htmlFor="title">Broadcast Title</Label>
-                            <Input id="title" placeholder="e.g., Robot Assembly Live" value={title} onChange={e => setTitle(e.target.value)} className="bg-white/5 border-white/10" />
+                            <Input id="title" placeholder="e.g., Robot Assembly Live" value={title} onChange={e => setTitle(e.target.value)} className="bg-white/5 border-black/[0.08]" />
                         </div>
                         <div className="grid grid-cols-2 gap-4">
                              <div className="space-y-2">
                                 <Label>Date</Label>
-                                <div className="h-10 px-3 py-2 rounded-md bg-white/5 border border-white/10 text-xs flex items-center">
+                                <div className="h-10 px-3 py-2 rounded-md bg-white/5 border border-black/[0.08] text-xs flex items-center">
                                     {selectedDate ? format(selectedDate, 'MMM d, yyyy') : 'Select date'}
                                 </div>
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="time">Time (24h)</Label>
-                                <Input id="time" type="time" value={time} onChange={e => setTime(e.target.value)} className="bg-white/5 border-white/10" />
+                                <Input id="time" type="time" value={time} onChange={e => setTime(e.target.value)} className="bg-white/5 border-black/[0.08]" />
                             </div>
                         </div>
                         <Button className="w-full bg-accent hover:bg-accent/90 text-accent-foreground font-bold h-12 mt-4 shadow-lg shadow-accent/20" onClick={handleScheduleClass} disabled={isScheduling || coursesLoading}>
