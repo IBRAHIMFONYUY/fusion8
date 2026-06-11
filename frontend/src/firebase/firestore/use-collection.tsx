@@ -85,20 +85,35 @@ export function useCollection<T = any>(
         setIsLoading(false);
       },
       (error: FirestoreError) => {
-        const path: string =
-          memoizedTargetRefOrQuery.type === 'collection'
-            ? (memoizedTargetRefOrQuery as CollectionReference).path
-            : (memoizedTargetRefOrQuery as unknown as InternalQuery)._query.path.canonicalString()
+        if (error.code === 'permission-denied') {
+          let path = 'unknown';
+          try {
+            if (memoizedTargetRefOrQuery.type === 'collection') {
+              path = (memoizedTargetRefOrQuery as CollectionReference).path;
+            } else if ((memoizedTargetRefOrQuery as any)._query?.path?.canonicalString) {
+              path = (memoizedTargetRefOrQuery as any)._query.path.canonicalString();
+            } else if ((memoizedTargetRefOrQuery as any)._query?.path?.segments) {
+              path = (memoizedTargetRefOrQuery as any)._query.path.segments.join('/');
+            }
+          } catch (e) {
+            // Ignore path extraction errors
+          }
 
-        const contextualError = new FirestorePermissionError({
-          operation: 'list',
-          path,
-        })
+          const contextualError = new FirestorePermissionError({
+            operation: 'list',
+            path,
+          });
 
-        setError(contextualError)
-        setData(null)
-        setIsLoading(false)
-        errorEmitter.emit('permission-error', contextualError);
+          setError(contextualError);
+          setData(null);
+          setIsLoading(false);
+          errorEmitter.emit('permission-error', contextualError);
+        } else {
+          // Preserve missing index errors or network errors
+          setError(error);
+          setData(null);
+          setIsLoading(false);
+        }
       }
     );
 

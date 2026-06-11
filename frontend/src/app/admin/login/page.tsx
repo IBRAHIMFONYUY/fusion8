@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Shield, Loader2, AlertCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { signInUser, PLATFORM_ADMIN_EMAIL } from '@/lib/auth';
+import { signInUser, PLATFORM_ADMIN_EMAIL, adminResetUserPassword } from '@/lib/auth';
 import { useRouter } from 'next/navigation';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
@@ -53,6 +53,22 @@ export default function AdminLoginPage() {
     }
   };
 
+  const handleForgotPassword = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (!email || !/^\S+@\S+\.\S+$/.test(email)) {
+      toast({ variant: 'destructive', title: 'Admin ID required', description: 'Please enter your Admin ID (email) first to reset your security key.' });
+      return;
+    }
+    setLoading(true);
+    const result = await adminResetUserPassword(email);
+    if (result.success) {
+      toast({ title: 'Protocol Initiated', description: 'Check your secure communication channel for reset instructions.' });
+    } else {
+      toast({ variant: 'destructive', title: 'Reset Failed', description: (result as any).error });
+    }
+    setLoading(false);
+  };
+
   return (
     <div className="portal-theme min-h-screen flex items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md shadow-2xl border-none">
@@ -87,7 +103,17 @@ export default function AdminLoginPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">Security Key</Label>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="password">Security Key</Label>
+                <button
+                  type="button"
+                  onClick={handleForgotPassword}
+                  disabled={loading}
+                  className="text-xs font-medium text-muted-foreground hover:text-accent transition-colors"
+                >
+                  Forgot key?
+                </button>
+              </div>
               <Input 
                 id="password" 
                 type="password" 

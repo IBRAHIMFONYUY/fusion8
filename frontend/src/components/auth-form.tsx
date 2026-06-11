@@ -49,6 +49,7 @@ export function AuthForm() {
 
   const handleGoogleSignIn = async () => {
     setIsPending(true);
+    setErrorHint(null);
     try {
       const result = await signInWithGoogle();
       if (result.success) {
@@ -56,11 +57,24 @@ export function AuthForm() {
         const target = returnTo || `/${result.role}/dashboard`;
         window.location.href = target;
       } else {
-        toast({ variant: "destructive", title: "Google Login Failed", description: (result as any).error });
+        const errorMsg = (result as any).error;
+        if (errorMsg.includes('auth/popup-blocked') || errorMsg.includes('popup')) {
+          setErrorHint("Popups are blocked by your browser. Please allow popups for this site to sign in with Google.");
+        } else if (errorMsg.includes('auth/account-exists-with-different-credential')) {
+          setErrorHint("An account already exists with the same email but different sign-in credentials. Please sign in using email and password.");
+        } else {
+          toast({ variant: "destructive", title: "Google Login Failed", description: errorMsg });
+        }
         setIsPending(false);
       }
-    } catch (err) {
-      toast({ variant: "destructive", title: "Error", description: "Could not connect to Google services." });
+    } catch (err: any) {
+      if (err?.code === 'auth/popup-blocked' || err?.message?.includes('popup')) {
+        setErrorHint("Popups are blocked by your browser. Please allow popups for this site.");
+      } else if (err?.code === 'auth/network-request-failed') {
+        setErrorHint("Network interrupted. Please check your connection and try again.");
+      } else {
+        toast({ variant: "destructive", title: "Error", description: "Could not connect to Google services." });
+      }
       setIsPending(false);
     }
   };
@@ -106,8 +120,12 @@ export function AuthForm() {
           setIsPending(false);
         }
       }
-    } catch (error) {
-      toast({ variant: "destructive", title: "Error", description: "An unexpected error occurred." });
+    } catch (error: any) {
+      if (error?.code === 'auth/network-request-failed') {
+        setErrorHint("Network interrupted. Please check your connection and try again.");
+      } else {
+        toast({ variant: "destructive", title: "Error", description: "An unexpected error occurred." });
+      }
       setIsPending(false);
     }
   };

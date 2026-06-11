@@ -12,9 +12,9 @@ try {
   } else {
     // Standard discrete environment variables
     serviceAccount = {
-      projectId: process.env.FIREBASE_ADMIN_PROJECT_ID,
-      clientEmail: process.env.FIREBASE_ADMIN_CLIENT_EMAIL,
-      privateKey: privateKeyValue.replace(/\\n/g, '\n'),
+      project_id: process.env.FIREBASE_ADMIN_PROJECT_ID,
+      client_email: process.env.FIREBASE_ADMIN_CLIENT_EMAIL,
+      private_key: privateKeyValue.replace(/\\n/g, '\n'),
     };
   }
 } catch (error) {

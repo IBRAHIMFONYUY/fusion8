@@ -3,76 +3,87 @@
 @tailwind utilities;
 
 /*
-  FUSION 8 — Design System (Light-Dominant)
-  Direction: Apple / Stripe / Linear Light — crisp, premium, purposeful.
-  Rule: White breathes. Slate reads. Orange acts.
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+FUSION8 DESIGN SYSTEM v3
+Theme: #fc031c Fire Red + #0a0001 Charcoal + #e9f7f6 Mint
+Style: Tesla × Apple × Gemini × Linear
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 */
 
 @layer base {
   :root {
-    --background:           210 20% 98%;      /* #F9FAFB — ultra-light gray */
-    --foreground:           215 25% 17%;      /* #1E293B — rich slate */
+    /* Core */
+    --background: 176 47% 94%;
+    --foreground: 354 100% 2%;
 
-    --card:                 0 0% 100%;        /* #FFFFFF — pure white cards */
-    --card-foreground:      215 25% 17%;
+    /* Cards */
+    --card: 0 0% 100%;
+    --card-foreground: 354 100% 2%;
 
-    --popover:              0 0% 100%;
-    --popover-foreground:   215 25% 17%;
+    /* Popovers */
+    --popover: 0 0% 100%;
+    --popover-foreground: 354 100% 2%;
 
-    --primary:              13 76% 52%;       /* #E44D28 — molten orange accent */
-    --primary-foreground:   0 0% 100%;
+    /* Fusion8 Primary — charcoal for dark text / fills */
+    --primary: 354 100% 2%;
+    --primary-foreground: 176 47% 94%;
 
-    --secondary:            210 20% 96%;      /* #F1F5F9 — light panels */
-    --secondary-foreground: 215 25% 17%;
+    /* Secondary */
+    --secondary: 176 20% 92%;
+    --secondary-foreground: 354 60% 6%;
 
-    --muted:                210 17% 95%;      /* #F1F5F9 */
-    --muted-foreground:     215 16% 47%;      /* #64748B — soft muted gray */
+    /* Muted */
+    --muted: 176 15% 92%;
+    --muted-foreground: 200 10% 42%;
 
-    --accent:               13 76% 52%;       /* #E44D28 — molten orange */
-    --accent-foreground:    0 0% 100%;
+    /* Fusion8 Accent — fire red */
+    --accent: 354 98% 50%;
+    --accent-foreground: 0 0% 100%;
 
-    --destructive:          0 84% 60%;
-    --destructive-foreground: 0 0% 98%;
+    /* Destructive */
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border:               214 20% 90%;      /* #E2E8F0 — soft slate border */
-    --input:                214 20% 90%;
-    --ring:                 13 76% 52%;
+    /* Borders / Inputs */
+    --border: 176 18% 86%;
+    --input: 176 18% 86%;
+    --ring: 354 98% 50%;
 
-    --chart-1:              13 76% 52%;
-    --chart-2:              11 73% 44%;
-    --chart-3:              215 25% 40%;
-    --chart-4:              13 50% 65%;
-    --chart-5:              215 16% 65%;
+    /* Charts */
+    --chart-1: 354 98% 50%;
+    --chart-2: 354 100% 2%;
+    --chart-3: 200 10% 42%;
+    --chart-4: 176 20% 68%;
+    --chart-5: 176 15% 84%;
 
-    --radius: 0.5rem;
+    /* Fusion8 Extended Palette */
+    --fusion-red: 354 98% 50%;
+    --fusion-charcoal: 354 100% 2%;
+    --fusion-mint: 176 47% 94%;
+    --fusion-hover: 354 96% 48%;
+    --fusion-glow: 354 98% 50%;
+
+    --radius: 1rem;
   }
 
-  /* Portal theme — same as root for unified light experience */
   .portal-theme {
-    --background:           210 20% 98%;
-    --foreground:           215 25% 17%;
-    --card:                 0 0% 100%;
-    --card-foreground:      215 25% 17%;
-    --popover:              0 0% 100%;
-    --popover-foreground:   215 25% 17%;
-    --primary:              215 25% 17%;
-    --primary-foreground:   0 0% 100%;
-    --secondary:            210 20% 96%;
-    --secondary-foreground: 215 25% 17%;
-    --muted:                210 17% 95%;
-    --muted-foreground:     215 16% 47%;
-    --accent:               13 76% 52%;
-    --accent-foreground:    0 0% 100%;
-    --destructive:          0 84% 60%;
-    --destructive-foreground: 0 0% 98%;
-    --border:               214 20% 90%;
-    --input:                214 20% 90%;
-    --ring:                 13 76% 52%;
-    --chart-1:              13 76% 52%;
-    --chart-2:              11 73% 44%;
-    --chart-3:              215 25% 40%;
-    --chart-4:              13 50% 65%;
-    --chart-5:              215 16% 65%;
+    --background: 176 47% 94%;
+    --foreground: 354 100% 2%;
+    --card: 0 0% 100%;
+    --card-foreground: 354 100% 2%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 354 100% 2%;
+    --primary: 354 100% 2%;
+    --primary-foreground: 176 47% 94%;
+    --secondary: 176 20% 92%;
+    --secondary-foreground: 354 60% 6%;
+    --muted: 176 15% 92%;
+    --muted-foreground: 200 10% 42%;
+    --accent: 354 98% 50%;
+    --accent-foreground: 0 0% 100%;
+    --border: 176 18% 86%;
+    --input: 176 18% 86%;
+    --ring: 354 98% 50%;
   }
 }
 
@@ -80,110 +91,369 @@
   * {
     @apply border-border;
   }
-  body {
-    @apply text-foreground antialiased;
-    /* Soft, pristine white base with a very subtle slate gradient that doesn't overpower text */
-    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 40%, #f1f5f9 100%);
-    position: relative;
-    font-family: 'Inter', sans-serif;
+
+  html {
+    scroll-behavior: smooth;
   }
 
-  /* Blurry, clean shining blackish gradient overlay */
+  body {
+    @apply text-foreground antialiased;
+
+    background:
+      radial-gradient(ellipse at 10% 15%,
+        hsla(354, 98%, 50%, 0.045),
+        transparent 40%),
+      radial-gradient(ellipse at 85% 80%,
+        hsla(354, 100%, 2%, 0.05),
+        transparent 45%),
+      radial-gradient(ellipse at 50% 50%,
+        hsla(176, 47%, 94%, 0.35),
+        transparent 60%),
+      linear-gradient(180deg,
+        hsl(176, 47%, 94%) 0%,
+        hsl(176, 40%, 96%) 50%,
+        hsl(176, 32%, 93%) 100%);
+
+    min-height: 100vh;
+    position: relative;
+    font-family: "Plus Jakarta Sans", "Inter", sans-serif;
+  }
+
   body::before {
-    content: '';
+    content: "";
+
     position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    /* A very clean, shining blackish mesh that stays completely out of the way of text */
-    background: radial-gradient(circle at 80% 20%, rgba(15, 23, 42, 0.04) 0%, transparent 40%),
-                radial-gradient(circle at 20% 80%, rgba(15, 23, 42, 0.03) 0%, transparent 50%);
-    backdrop-filter: blur(40px); /* Gives it that VisionOS blurry shine */
-    -webkit-backdrop-filter: blur(40px);
+    inset: 0;
+
+    background:
+      radial-gradient(ellipse at 15% 20%,
+        hsla(354, 98%, 50%, 0.06),
+        transparent 35%),
+      radial-gradient(ellipse at 80% 75%,
+        hsla(354, 100%, 2%, 0.05),
+        transparent 40%),
+      radial-gradient(ellipse at 50% 100%,
+        hsla(176, 47%, 94%, 0.2),
+        transparent 50%);
+
     pointer-events: none;
     z-index: -1;
   }
 
-  h1, h2, h3, h4, h5, h6 {
-    font-family: 'Inter', sans-serif;
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: "Oxanium", "Inter", sans-serif;
     font-weight: 800;
-    letter-spacing: -0.03em;
+    letter-spacing: -0.04em;
   }
 }
 
-/* Override Tailwind's bg-accent to use a sleek gradient instead of flat orange */
+/* ===========================
+   PREMIUM GLASS SYSTEM
+=========================== */
+
+.glass-card {
+  background: rgba(255, 255, 255, 0.6);
+
+  backdrop-filter: blur(32px) saturate(180%);
+  -webkit-backdrop-filter: blur(32px) saturate(180%);
+
+  border: 1px solid rgba(255, 255, 255, 0.35);
+
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.08),
+    0 8px 32px rgba(10, 0, 1, 0.04),
+    0 24px 64px rgba(10, 0, 1, 0.06);
+
+  border-radius: 1.25rem;
+}
+
+.glass-dark {
+  background: rgba(10, 0, 1, 0.72);
+
+  backdrop-filter: blur(32px) saturate(150%);
+  -webkit-backdrop-filter: blur(32px) saturate(150%);
+
+  border: 1px solid rgba(252, 3, 28, 0.08);
+
+  color: white;
+
+  border-radius: 1.25rem;
+}
+
+/* ===========================
+   FUSION8 BRAND GRADIENTS
+=========================== */
+
 .bg-accent {
-  background: linear-gradient(135deg, hsl(13 76% 52%) 0%, hsl(13 85% 40%) 100%) !important;
-  box-shadow: inset 0 1px 1px rgba(255,255,255,0.2), 0 4px 14px rgba(228, 77, 40, 0.25) !important;
+  background:
+    linear-gradient(135deg,
+      #fc031c 0%,
+      #f7071f 60%,
+      #ff2d3b 100%) !important;
+
+  color: white !important;
+
+  box-shadow:
+    0 10px 36px rgba(252, 3, 28, 0.22),
+    0 2px 8px rgba(252, 3, 28, 0.12);
 }
 
 .hover\:bg-accent\/90:hover {
-  background: linear-gradient(135deg, hsl(13 80% 48%) 0%, hsl(13 90% 36%) 100%) !important;
-  box-shadow: inset 0 1px 1px rgba(255,255,255,0.2), 0 6px 20px rgba(228, 77, 40, 0.35) !important;
+  background:
+    linear-gradient(135deg,
+      #e0021a 0%,
+      #d90618 60%,
+      #f7071f 100%) !important;
 }
 
-/* Grid texture — subtle on light */
+/* ===========================
+   HERO IMAGE OVERLAYS
+=========================== */
+
+.hero-overlay {
+  position: absolute;
+  inset: 0;
+
+  background:
+    linear-gradient(180deg,
+      rgba(10, 0, 1, 0.65) 0%,
+      rgba(10, 0, 1, 0.35) 50%,
+      rgba(10, 0, 1, 0.15) 100%);
+}
+
+/* ===========================
+   GLOW EFFECTS
+=========================== */
+
+.fusion-glow {
+  position: absolute;
+
+  width: 600px;
+  height: 600px;
+
+  border-radius: 999px;
+
+  background:
+    radial-gradient(circle,
+      rgba(252, 3, 28, 0.14),
+      transparent 70%);
+
+  filter: blur(120px);
+
+  pointer-events: none;
+}
+
+.glow-orange {
+  background:
+    radial-gradient(ellipse at center,
+      rgba(252, 3, 28, 0.10),
+      transparent 70%);
+}
+
+.glow-orange-sm {
+  background:
+    radial-gradient(ellipse at center,
+      rgba(252, 3, 28, 0.06),
+      transparent 60%);
+}
+
+/* ===========================
+   GRID TEXTURE
+=========================== */
+
 .grid-texture {
   background-image:
-    linear-gradient(rgba(30, 41, 59, 0.04) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(30, 41, 59, 0.04) 1px, transparent 1px);
+    linear-gradient(rgba(10, 0, 1, 0.04) 1px,
+      transparent 1px),
+    linear-gradient(90deg,
+      rgba(10, 0, 1, 0.04) 1px,
+      transparent 1px);
+
   background-size: 48px 48px;
 }
 
-/* Orange radial glow — for emphasis sections */
-.glow-orange {
-  background: radial-gradient(ellipse at center, rgba(228, 77, 40, 0.08) 0%, transparent 70%);
-}
-.glow-orange-sm {
-  background: radial-gradient(ellipse at center, rgba(228, 77, 40, 0.05) 0%, transparent 60%);
+/* ===========================
+   HOVER SYSTEM
+=========================== */
+
+.card-hover {
+  transition:
+    transform .35s cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow .35s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* Orange left-border accent */
-.border-accent-left {
-  border-left: 3px solid hsl(13 76% 52%);
+.card-hover:hover {
+  transform: translateY(-6px);
+
+  box-shadow:
+    0 24px 48px rgba(10, 0, 1, 0.10),
+    0 8px 16px rgba(252, 3, 28, 0.06);
 }
+
+/* ===========================
+   ANIMATIONS
+=========================== */
+
+@keyframes float {
+  0% {
+    transform: translateY(0px);
+  }
+
+  50% {
+    transform: translateY(-12px);
+  }
+
+  100% {
+    transform: translateY(0px);
+  }
+}
+
+.animate-float {
+  animation:
+    float 8s ease-in-out infinite;
+}
+
+/* ===========================
+   ACCENT BORDERS
+=========================== */
+
+.border-accent-left {
+  border-left: 3px solid #fc031c;
+}
+
+/* ===========================
+   GLOW BORDER EFFECT
+=========================== */
+
+.border-glow {
+  position: relative;
+}
+
+.border-glow::before {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  background:
+    linear-gradient(135deg,
+      rgba(252, 3, 28, 0.25),
+      transparent 50%,
+      rgba(252, 3, 28, 0.12));
+  z-index: -1;
+  opacity: 0;
+  transition: opacity 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  pointer-events: none;
+}
+
+.border-glow:hover::before {
+  opacity: 1;
+}
+
+/* ===========================
+   FOCUS RING — ACCESSIBILITY
+=========================== */
+
+.focus-ring {
+  outline: none;
+}
+
+.focus-ring:focus-visible {
+  box-shadow:
+    0 0 0 2px hsl(176, 47%, 94%),
+    0 0 0 4px hsl(354, 98%, 50%);
+}
+
+/* ===========================
+   NOISE TEXTURE OVERLAY
+=========================== */
+
+.texture-noise {
+  position: relative;
+}
+
+.texture-noise::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+  opacity: 0.03;
+  pointer-events: none;
+  border-radius: inherit;
+  z-index: 1;
+}
+
+/* ===========================
+   TYPOGRAPHY SYSTEM
+=========================== */
 
 @layer utilities {
   .scrollbar-hide {
     -ms-overflow-style: none;
     scrollbar-width: none;
   }
+
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
   }
 
-  /* Orange tint backgrounds */
-  .bg-orange-glow {    background-color: rgba(228, 77, 40, 0.08); }
-  .bg-orange-subtle {  background-color: rgba(228, 77, 40, 0.04); }
-
-  /* ── Unified typography scale ────────────────────────────────────── */
   .text-display {
-    font-size: clamp(2.2rem, 5vw, 4rem);
+    font-size: clamp(2.5rem, 5vw, 4.5rem);
     font-weight: 800;
     letter-spacing: -0.04em;
     line-height: 1.05;
   }
+
   .text-hero {
-    font-size: clamp(1.6rem, 3.5vw, 2.75rem);
+    font-size: clamp(1.8rem, 4vw, 3rem);
     font-weight: 800;
-    letter-spacing: -0.03em;
+    letter-spacing: -0.035em;
     line-height: 1.1;
   }
+
   .text-section {
-    font-size: clamp(1.4rem, 3vw, 2.25rem);
+    font-size: clamp(1.5rem, 3vw, 2.5rem);
     font-weight: 700;
-    letter-spacing: -0.02em;
+    letter-spacing: -0.025em;
     line-height: 1.15;
   }
 
-  /* ── Unified section label ──────────────────────────────────────── */
   .section-label {
-    font-size: 0.6875rem;
+    font-size: 0.75rem;
     font-weight: 900;
     text-transform: uppercase;
     letter-spacing: 0.2em;
-    color: hsl(13 76% 52%);
+    color: hsl(200, 10%, 42%);
     margin-bottom: 1rem;
+  }
+
+  .bg-orange-glow {
+    background-color: rgba(252, 3, 28, 0.07);
+  }
+
+  .bg-orange-subtle {
+    background-color: rgba(252, 3, 28, 0.035);
+  }
+
+  /* Responsive type scaling for mobile */
+  @media (max-width: 640px) {
+    .text-display {
+      font-size: clamp(2rem, 8vw, 2.5rem);
+      letter-spacing: -0.035em;
+    }
+
+    .text-hero {
+      font-size: clamp(1.5rem, 6vw, 1.8rem);
+      letter-spacing: -0.03em;
+    }
+
+    .text-section {
+      font-size: clamp(1.25rem, 5vw, 1.5rem);
+      letter-spacing: -0.02em;
+    }
   }
 }

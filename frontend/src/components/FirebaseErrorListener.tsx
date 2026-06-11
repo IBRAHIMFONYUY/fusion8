@@ -29,9 +29,10 @@ export function FirebaseErrorListener() {
     };
   }, []);
 
-  // On re-render, if an error exists in state, throw it.
+  // On re-render, if an error exists in state, log it instead of throwing.
+  // Throwing here bypasses graceful error handling in components (like the blog page's EmptyState).
   if (error) {
-    throw error;
+    console.error('Global Firebase Permission Error:', error);
   }
 
   // This component renders nothing.

@@ -1,11 +1,11 @@
 import { config } from 'dotenv';
 import { resolve } from 'path';
+
+// Load .env file BEFORE importing any internal modules that require it
+config({ path: resolve(__dirname, '../.env') });
+
 import { getAuth } from 'firebase-admin/auth';
 import { getFirestore, FieldValue } from 'firebase-admin/firestore';
-import { adminAuth, adminDb as adminFirestore } from '../src/firebase/admin';
-
-// Load .env file
-config({ path: resolve(__dirname, '../.env') });
 
 const SEED_PASSWORD = 'password';
 
@@ -48,6 +48,8 @@ async function seedUsers() {
     console.error('Make sure you have copied .env.example to .env and filled it out.');
     process.exit(1);
   }
+
+  const { adminAuth, adminDb: adminFirestore } = await import('../src/firebase/admin');
 
   for (const userData of usersToSeed) {
     try {
