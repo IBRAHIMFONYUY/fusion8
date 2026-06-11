@@ -10,69 +10,69 @@
 
 @layer base {
   :root {
-    --background:           0 0% 96%;         /* Soft off-white */
-    --foreground:           0 0% 10%;         /* Deep black */
+    --background:           210 20% 98%;      /* #F9FAFB — ultra-light gray */
+    --foreground:           215 25% 17%;      /* #1E293B — rich slate */
 
-    --card:                 0 0% 100%;
-    --card-foreground:      0 0% 10%;
+    --card:                 0 0% 100%;        /* #FFFFFF — pure white cards */
+    --card-foreground:      215 25% 17%;
 
     --popover:              0 0% 100%;
-    --popover-foreground:   0 0% 10%;
+    --popover-foreground:   215 25% 17%;
 
-    --primary:              0 0% 10%;         /* Black */
+    --primary:              13 76% 52%;       /* #E44D28 — molten orange accent */
     --primary-foreground:   0 0% 100%;
 
-    --secondary:            0 0% 92%;
-    --secondary-foreground: 0 0% 10%;
+    --secondary:            210 20% 96%;      /* #F1F5F9 — light panels */
+    --secondary-foreground: 215 25% 17%;
 
-    --muted:                0 0% 92%;
-    --muted-foreground:     0 0% 40%;
+    --muted:                210 17% 95%;      /* #F1F5F9 */
+    --muted-foreground:     215 16% 47%;      /* #64748B — soft muted gray */
 
-    --accent:               0 0% 10%;         /* Black Accent */
+    --accent:               13 76% 52%;       /* #E44D28 — molten orange */
     --accent-foreground:    0 0% 100%;
 
     --destructive:          0 84% 60%;
     --destructive-foreground: 0 0% 98%;
 
-    --border:               0 0% 85%;
-    --input:                0 0% 85%;
-    --ring:                 0 0% 10%;
+    --border:               214 20% 90%;      /* #E2E8F0 — soft slate border */
+    --input:                214 20% 90%;
+    --ring:                 13 76% 52%;
 
-    --chart-1:              0 0% 20%;
-    --chart-2:              0 0% 40%;
-    --chart-3:              0 0% 60%;
-    --chart-4:              0 0% 80%;
-    --chart-5:              0 0% 90%;
+    --chart-1:              13 76% 52%;
+    --chart-2:              11 73% 44%;
+    --chart-3:              215 25% 40%;
+    --chart-4:              13 50% 65%;
+    --chart-5:              215 16% 65%;
 
     --radius: 0.5rem;
   }
 
   /* Portal theme — same as root for unified light experience */
   .portal-theme {
-    --background:           0 0% 96%;
-    --foreground:           0 0% 10%;
+    --background:           210 20% 98%;
+    --foreground:           215 25% 17%;
     --card:                 0 0% 100%;
-    --card-foreground:      0 0% 10%;
+    --card-foreground:      215 25% 17%;
     --popover:              0 0% 100%;
-    --popover-foreground:   0 0% 10%;
-    --primary:              0 0% 10%;
+    --popover-foreground:   215 25% 17%;
+    --primary:              215 25% 17%;
     --primary-foreground:   0 0% 100%;
-    --secondary:            0 0% 92%;
-    --secondary-foreground: 0 0% 10%;
-    --muted:                0 0% 92%;
-    --muted-foreground:     0 0% 40%;
-    --accent:               0 0% 10%;
+    --secondary:            210 20% 96%;
+    --secondary-foreground: 215 25% 17%;
+    --muted:                210 17% 95%;
+    --muted-foreground:     215 16% 47%;
+    --accent:               13 76% 52%;
     --accent-foreground:    0 0% 100%;
     --destructive:          0 84% 60%;
     --destructive-foreground: 0 0% 98%;
-    --border:               0 0% 85%;
-    --input:                0 0% 85%;
-    --ring:                 0 0% 10%;
-    --chart-1:              0 0% 20%;
-    --chart-2:              0 0% 40%;
-    --chart-3:              0 0% 60%;
-    --chart-4:              0 0% 80%;
-    --chart-5:              0 0% 90%;
+    --border:               214 20% 90%;
+    --input:                214 20% 90%;
+    --ring:                 13 76% 52%;
+    --chart-1:              13 76% 52%;
+    --chart-2:              11 73% 44%;
+    --chart-3:              215 25% 40%;
+    --chart-4:              13 50% 65%;
+    --chart-5:              215 16% 65%;
   }
 }
 
@@ -82,12 +82,13 @@
   }
   body {
     @apply text-foreground antialiased;
-    background: linear-gradient(135deg, #f7f8fa 0%, #e2e4e9 100%);
+    /* Soft, pristine white base with a very subtle slate gradient that doesn't overpower text */
+    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 40%, #f1f5f9 100%);
     position: relative;
     font-family: 'Inter', sans-serif;
   }
 
-  /* Blurry, dark depth mesh overlay */
+  /* Blurry, clean shining blackish gradient overlay */
   body::before {
     content: '';
     position: fixed;
@@ -95,9 +96,10 @@
     left: 0;
     width: 100vw;
     height: 100vh;
-    background: radial-gradient(circle at 50% 0%, rgba(0, 0, 0, 0.08) 0%, transparent 70%),
-                radial-gradient(circle at 80% 100%, rgba(0, 0, 0, 0.12) 0%, transparent 60%);
-    backdrop-filter: blur(40px);
+    /* A very clean, shining blackish mesh that stays completely out of the way of text */
+    background: radial-gradient(circle at 80% 20%, rgba(15, 23, 42, 0.04) 0%, transparent 40%),
+                radial-gradient(circle at 20% 80%, rgba(15, 23, 42, 0.03) 0%, transparent 50%);
+    backdrop-filter: blur(40px); /* Gives it that VisionOS blurry shine */
     -webkit-backdrop-filter: blur(40px);
     pointer-events: none;
     z-index: -1;
@@ -110,36 +112,36 @@
   }
 }
 
-/* Black/White gradients instead of orange */
+/* Override Tailwind's bg-accent to use a sleek gradient instead of flat orange */
 .bg-accent {
-  background: linear-gradient(135deg, hsl(0 0% 25%) 0%, hsl(0 0% 5%) 100%) !important;
-  box-shadow: inset 0 1px 1px rgba(255,255,255,0.2), 0 4px 14px rgba(0, 0, 0, 0.3) !important;
+  background: linear-gradient(135deg, hsl(13 76% 52%) 0%, hsl(13 85% 40%) 100%) !important;
+  box-shadow: inset 0 1px 1px rgba(255,255,255,0.2), 0 4px 14px rgba(228, 77, 40, 0.25) !important;
 }
 
 .hover\:bg-accent\/90:hover {
-  background: linear-gradient(135deg, hsl(0 0% 20%) 0%, hsl(0 0% 0%) 100%) !important;
-  box-shadow: inset 0 1px 1px rgba(255,255,255,0.2), 0 6px 20px rgba(0, 0, 0, 0.4) !important;
+  background: linear-gradient(135deg, hsl(13 80% 48%) 0%, hsl(13 90% 36%) 100%) !important;
+  box-shadow: inset 0 1px 1px rgba(255,255,255,0.2), 0 6px 20px rgba(228, 77, 40, 0.35) !important;
 }
 
 /* Grid texture — subtle on light */
 .grid-texture {
   background-image:
-    linear-gradient(rgba(0, 0, 0, 0.06) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(0, 0, 0, 0.06) 1px, transparent 1px);
+    linear-gradient(rgba(30, 41, 59, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(30, 41, 59, 0.04) 1px, transparent 1px);
   background-size: 48px 48px;
 }
 
-/* Black/White radial glow */
+/* Orange radial glow — for emphasis sections */
 .glow-orange {
-  background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.08) 0%, transparent 70%);
+  background: radial-gradient(ellipse at center, rgba(228, 77, 40, 0.08) 0%, transparent 70%);
 }
 .glow-orange-sm {
-  background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.05) 0%, transparent 60%);
+  background: radial-gradient(ellipse at center, rgba(228, 77, 40, 0.05) 0%, transparent 60%);
 }
 
-/* Black left-border accent */
+/* Orange left-border accent */
 .border-accent-left {
-  border-left: 3px solid hsl(0 0% 10%);
+  border-left: 3px solid hsl(13 76% 52%);
 }
 
 @layer utilities {
@@ -151,9 +153,9 @@
     display: none;
   }
 
-  /* Black/White tint backgrounds */
-  .bg-orange-glow {    background-color: rgba(0, 0, 0, 0.08); }
-  .bg-orange-subtle {  background-color: rgba(0, 0, 0, 0.04); }
+  /* Orange tint backgrounds */
+  .bg-orange-glow {    background-color: rgba(228, 77, 40, 0.08); }
+  .bg-orange-subtle {  background-color: rgba(228, 77, 40, 0.04); }
 
   /* ── Unified typography scale ────────────────────────────────────── */
   .text-display {
@@ -181,7 +183,7 @@
     font-weight: 900;
     text-transform: uppercase;
     letter-spacing: 0.2em;
-    color: hsl(0 0% 40%);
+    color: hsl(13 76% 52%);
     margin-bottom: 1rem;
   }
 }
