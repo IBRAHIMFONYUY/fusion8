@@ -104,8 +104,14 @@ export function AuthForm() {
       if (activeTab === 'register') {
         const result = await signUpUser(values.email, values.password, values.name || 'User', values.role);
         if (result.success) {
-          toast({ title: "Account Created", description: `Welcome to Fusion8 as a ${values.role}.` });
-          window.location.href = returnTo || `/${result.role}/dashboard`;
+          if ((result as any).requiresVerification) {
+            toast({ title: "Account Created", description: "Please check your email to verify your account before signing in." });
+            setActiveTab('login');
+            setIsPending(false);
+          } else {
+            toast({ title: "Account Created", description: `Welcome to Fusion8 as a ${values.role}.` });
+            window.location.href = returnTo || `/${result.role}/dashboard`;
+          }
         } else {
           toast({ variant: "destructive", title: "Registration failed", description: (result as any).error });
           setIsPending(false);

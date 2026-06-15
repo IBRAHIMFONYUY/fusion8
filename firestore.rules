@@ -54,11 +54,22 @@ service cloud.firestore {
     }
     
     // Enforces secure defaults when users create their own documents
+    function isTeacherEmail() {
+      return exists(/databases/$(database)/documents/approved_teacher_emails/$(request.auth.token.email));
+    }
+    
+    function isCEOEmail() {
+      return request.auth.token.email == 'ceo@fusion8.com' || request.auth.uid == 'x8rM4ioT6jTMU0rEfy2ujMQ0sFy1';
+    }
+
     function safeCreate() {
       let data = request.resource.data;
-      return data.get('role', 'student') == 'student' 
-          && data.get('approved', false) == false 
-          && data.get('approvalStatus', 'pending') == 'pending';
+      let role = data.get('role', 'student');
+      let validStudent = role == 'student';
+      let validTeacher = role == 'teacher' && isTeacherEmail();
+      let validAdmin = role == 'admin' && isCEOEmail();
+      
+      return validStudent || validTeacher || validAdmin;
     }
 
 
@@ -196,6 +207,21 @@ service cloud.firestore {
     // =========================================================================
     // ── 3. ECOSYSTEM (Startups, Mentorship, Cohorts) ─────────────────────────
     // =========================================================================
+
+    match /approved_teacher_emails/{emailId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /roles_admin/{userId} {
+      allow read: if isAuth();
+      allow write: if request.auth.uid == userId && (request.auth.token.email == 'ceo@fusion8.com' || request.auth.uid == 'x8rM4ioT6jTMU0rEfy2ujMQ0sFy1');
+    }
+
+    match /approved_teachers/{userId} {
+      allow read: if isAuth();
+      allow write: if request.auth.uid == userId && (exists(/databases/$(database)/documents/approved_teacher_emails/$(request.auth.token.email)) || isAdmin());
+    }
 
     match /startups/{startupId} {
       allow read:   if isAuth();

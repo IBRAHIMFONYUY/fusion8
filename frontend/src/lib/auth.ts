@@ -101,8 +101,11 @@ export async function signUpUser(email: string, password: string, name: string, 
     } catch (err) {
       console.error('Failed to send verification email', err);
     }
+
+    // Log the user out immediately so they must verify their email to log back in
+    await firebaseSignOut(auth);
     
-    return { success: true, uid: user.uid, role: finalRole, approved: isApproved };
+    return { success: true, uid: user.uid, role: finalRole, approved: isApproved, requiresVerification: true };
   } catch (error: any) {
     return { success: false, error: mapAuthError(error) };
   }
@@ -172,6 +175,11 @@ export async function signInUser(email: string, password: string) {
     const user = userCredential.user;
     const isCEO = normalizedEmail === PLATFORM_ADMIN_EMAIL || user.uid === 'x8rM4ioT6jTMU0rEfy2ujMQ0sFy1';
     
+    if (!user.emailVerified && !isCEO) {
+      await firebaseSignOut(auth);
+      return { success: false, error: 'Please verify your email address before signing in. Check your inbox (or spam folder) for the verification link.' };
+    }
+
     const userDoc = await getDoc(doc(firestore, 'users', user.uid));
     
     if (!userDoc.exists()) {
