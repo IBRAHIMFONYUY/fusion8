@@ -26,7 +26,7 @@ export type CourseData = {
   longDescription: string;
   imageUrl: string;
   modules: Module[];
-  teacherId?: number; // Added for context
+  teacherId?: string;
   status?: 'published' | 'unpublished' | 'pending'; // Added for context
   featured?: boolean; // Added for context
   price?: number;
@@ -39,7 +39,7 @@ const initialCourseState: CourseData = {
     longDescription: '',
     imageUrl: '',
     modules: [],
-    teacherId: 2, // Mock teacherId
+    teacherId: '',
     status: 'pending'
 }
 

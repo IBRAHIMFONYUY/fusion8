@@ -12,7 +12,7 @@ import { ArrowRight, Check, Clock, Cpu, Zap, Bot, Brain, Leaf, Heart, Factory, B
 
 /* ── Data ─────────────────────────────────────────────────────────────────── */
 const HEADLINES = [
-  { line1: "Africa doesn't have an idea problem.", line2: "It has an execution problem." },
+  { line1: "Africa doesn't have an idea problem.", line2:  "It has an Structure execution problem." },
   { line1: "Great ideas don't change the world.", line2: "Built products do." },
   { line1: "Building Africa's next", line2: "generation of innovators." },
 ];
@@ -48,27 +48,27 @@ const COURSES = [
 ];
 
 const TRACKS = [
-  { icon: Bot,       label: 'Robotics & Automation',   status: 'now'  },
-  { icon: Brain,     label: 'AI & Intelligent Systems', status: 'soon' },
-  { icon: Cpu,       label: 'Embedded Systems',         status: 'soon' },
-  { icon: Zap,       label: 'Renewable Energy',         status: 'soon' },
-  { icon: Leaf,      label: 'Smart Agriculture',        status: 'soon' },
-  { icon: Heart,     label: 'Biomedical Engineering',   status: 'soon' },
-  { icon: Factory,   label: 'Manufacturing & Industry', status: 'soon' },
-  { icon: Building2, label: 'Smart Infrastructure',     status: 'soon' },
-  { icon: Globe,     label: 'Climate Technology',       status: 'soon' },
-  { icon: Truck,     label: 'Mobility & Transport',     status: 'soon' },
-  { icon: Droplets,  label: 'Water & Sanitation',       status: 'soon' },
-  { icon: BookOpen,  label: 'Education Technology',     status: 'soon' },
+  { icon: Bot, label: 'Robotics & Automation', status: 'now' },
+  { icon: Brain, label: 'AI & Intelligent Systems', status: 'soon' },
+  { icon: Cpu, label: 'Embedded Systems', status: 'soon' },
+  { icon: Zap, label: 'Renewable Energy', status: 'soon' },
+  { icon: Leaf, label: 'Smart Agriculture', status: 'soon' },
+  { icon: Heart, label: 'Biomedical Engineering', status: 'soon' },
+  { icon: Factory, label: 'Manufacturing & Industry', status: 'soon' },
+  { icon: Building2, label: 'Smart Infrastructure', status: 'soon' },
+  { icon: Globe, label: 'Climate Technology', status: 'soon' },
+  { icon: Truck, label: 'Mobility & Transport', status: 'soon' },
+  { icon: Droplets, label: 'Water & Sanitation', status: 'soon' },
+  { icon: BookOpen, label: 'Education Technology', status: 'soon' },
 ];
 
 const PIPELINE = [
-  { n: '01', t: 'Student',         d: 'Arrive with curiosity or a problem you want to solve.' },
-  { n: '02', t: 'Academy',         d: '7 weeks of hands-on hardware and IoT training.' },
-  { n: '03', t: 'Demo Day',        d: 'Present to real engineers. Judged on execution.' },
-  { n: '04', t: 'Incubator',       d: 'Mentorship, lab access, prototype to MVP.' },
-  { n: '05', t: 'Accelerator',     d: 'Commercialization, manufacturing, investor readiness.' },
-  { n: '06', t: 'Founder',         d: 'Launch your company. Build your team. Ship.' },
+  { n: '01', t: 'Student', d: 'Arrive with curiosity or a problem you want to solve.' },
+  { n: '02', t: 'Academy', d: '7 weeks of hands-on hardware and IoT training.' },
+  { n: '03', t: 'Demo Day', d: 'Present to real engineers. Judged on execution.' },
+  { n: '04', t: 'Incubator', d: 'Mentorship, lab access, prototype to MVP.' },
+  { n: '05', t: 'Accelerator', d: 'Commercialization, manufacturing, investor readiness.' },
+  { n: '06', t: 'Founder', d: 'Launch your company. Build your team. Ship.' },
 ];
 
 export default function HomePage() {
@@ -90,12 +90,12 @@ export default function HomePage() {
       {/* ═══════════════ HERO ═══════════════ */}
       <section className="relative pt-32 pb-20 border-b border-black/[0.06] overflow-hidden">
         <div className="absolute inset-0 pointer-events-none">
-          <Image src={IMAGES.heroLab} alt="" fill className="object-cover opacity-[0.07]" />
+          <Image src={IMAGES.heroLab} alt="" fill className="object-cover opacity-[0.]" />
           <div className="absolute inset-0 bg-background/92" />
-          <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] rounded-full" style={{ background: 'radial-gradient(ellipse, rgba(228,77,40,0.08) 0%, transparent 65%)' }} />
+          <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[600%] h-[100%] -full" style={{ background: 'linear-gradient(to top, rgba(10,14,16,0.54) 0%, rgba(10,14,16,0.75) 50%, rgba(10,14,16,0.50) 75%, rgba(10,14,16,0.25) 100%)' }} />
         </div>
         <div className="container mx-auto px-4 text-center relative z-10">
-          <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}
+          <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.10 }}
             className="inline-flex items-center gap-2 bg-accent/10 border border-accent/20 rounded-full px-4 py-1.5 mb-8">
             <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
             <span className="text-[10px] font-black uppercase tracking-[0.2em] text-accent">Now Enrolling — Cohort 01</span>
@@ -116,7 +116,7 @@ export default function HomePage() {
           </div>
 
           <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.4, duration: 0.8 }}
-            className="text-base md:text-lg max-w-2xl mx-auto mb-10" style={{ color: 'rgba(100,116,139,0.85)' }}>
+            className="text-base md:text-lg max-w-2xl mx-auto mb-10" style={{ color: 'rgba(240, 242, 245, 0.85)' }}>
             Building the talent, systems, and infrastructure required to turn African innovation into global impact. Starting in Bamenda, Cameroon.
           </motion.p>
 

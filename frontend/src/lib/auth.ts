@@ -66,6 +66,9 @@ function mapAuthError(error: AuthError): string {
       return 'Sign-in popup was closed. Please try again.';
     case 'auth/popup-blocked':
       return 'Popup blocked by your browser. Please allow popups for this site.';
+    case 'auth/firebase-app-check-token-is-invalid':
+    case 'auth/app-check-token-is-invalid':
+      return 'Security verification failed. Please disable App Check enforcement in Firebase Console → App Check, then try again.';
     default:
       return `Authentication failed. Please try again. (${error.code})`;
   }
@@ -229,9 +232,16 @@ export async function signInWithGoogle() {
       await ensureSecurityMarkers(user.uid, finalRole, isApproved, email);
     }
 
-    // Issue session cookie so middleware protects routes immediately
+    // Issue session cookie — if this fails, the user cannot access protected routes
     const idToken = await user.getIdToken();
-    await createSession(idToken);
+    const sessionResult = await createSession(idToken);
+    if (!sessionResult.success) {
+      await firebaseSignOut(auth);
+      return {
+        success: false,
+        error: 'Session could not be established. Check your Firebase Admin SDK credentials and restart the server.',
+      };
+    }
 
     return { success: true, uid: user.uid, role: finalRole, approved: isApproved };
   } catch (error: any) {
@@ -293,9 +303,16 @@ export async function signInUser(email: string, password: string) {
       await ensureSecurityMarkers(user.uid, finalRole, isApproved, normalizedEmail);
     }
 
-    // Issue session cookie
+    // Issue session cookie — if this fails, the user cannot access protected routes
     const idToken = await user.getIdToken();
-    await createSession(idToken);
+    const sessionResult = await createSession(idToken);
+    if (!sessionResult.success) {
+      await firebaseSignOut(auth);
+      return {
+        success: false,
+        error: 'Session could not be established. Check your Firebase Admin SDK credentials and restart the server.',
+      };
+    }
 
     return { success: true, uid: user.uid, role: finalRole, approved: isApproved };
   } catch (error: any) {

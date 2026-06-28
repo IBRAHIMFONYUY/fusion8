@@ -6,22 +6,26 @@ const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY;
 const FROM_EMAIL = process.env.EMAIL_FROM ?? 'noreply@fusion8.tech';
 const FROM_NAME = 'Fusion8';
 
-// Internal-only templates that only our system should trigger (not user requests)
+// Templates that only our backend (webhooks, server actions) should trigger.
+// They require the x-internal-secret header — NOT a body flag, which any
+// unauthenticated client could forge.
 const SYSTEM_ONLY_TEMPLATES: EmailTemplate[] = [
   'teacher_approved',
   'teacher_rejected',
   'password_reset',
 ];
 
-export async function POST(request: NextRequest) {
-  // Emails triggered by users must be authenticated
-  const session = await verifySession();
+function isValidInternalRequest(request: NextRequest): boolean {
+  const secret = process.env.INTERNAL_API_SECRET;
+  if (!secret) return false; // If secret is not configured, reject all internal calls
+  return request.headers.get('x-internal-secret') === secret;
+}
 
+export async function POST(request: NextRequest) {
   let body: {
     to: string;
     template: EmailTemplate;
     data: Record<string, string | number | boolean>;
-    _internal?: boolean;
   };
 
   try {
@@ -30,16 +34,23 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Invalid request body.' }, { status: 400 });
   }
 
-  // System-only templates require the request to come from our own server routes
-  // (marked with _internal: true from webhook/server-action context)
-  if (SYSTEM_ONLY_TEMPLATES.includes(body.template) && !body._internal) {
+  const isSystemTemplate = SYSTEM_ONLY_TEMPLATES.includes(body.template);
+
+  if (isSystemTemplate) {
+    // System templates require the server-to-server shared secret.
+    // A body field like _internal:true would be trivially forgeable by any client.
+    if (!isValidInternalRequest(request)) {
+      return NextResponse.json({ error: 'Unauthorized.' }, { status: 401 });
+    }
+  } else {
+    // User-triggered templates (e.g. contact form) require an authenticated session
+    const session = await verifySession();
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized.' }, { status: 401 });
     }
   }
 
   if (!SENDGRID_API_KEY) {
-    // In development, log the email instead of sending
     if (process.env.NODE_ENV !== 'production') {
       console.log('[email/send] DEV MODE — Email would be sent:');
       console.log('  To:', body.to);

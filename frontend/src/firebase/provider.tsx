@@ -10,13 +10,15 @@ import React, {
   useEffect,
   useRef,
 } from 'react';
+import { useRouter } from 'next/navigation';
 import { FirebaseApp } from 'firebase/app';
 import { Firestore, doc, onSnapshot } from 'firebase/firestore';
 import { Auth, User, onAuthStateChanged } from 'firebase/auth';
 import { FirebaseErrorListener } from '@/components/FirebaseErrorListener';
 import { Button } from '@/components/ui/button';
-import { Clock, Loader2 } from 'lucide-react';
+import { Clock } from 'lucide-react';
 import { signOut, PLATFORM_ADMIN_EMAIL } from '@/lib/auth';
+import { createSession } from '@/lib/auth-actions';
 
 // Read from env — never hardcoded in source. Set NEXT_PUBLIC_PLATFORM_ADMIN_UID
 // in .env.local and in your hosting platform's environment configuration.
@@ -68,18 +70,16 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
   firestore,
   auth,
 }) => {
+  const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [isAuthLoading, setIsAuthLoading] = useState(true);
   const [isProfileLoading, setIsProfileLoading] = useState(false);
   const [authError, setAuthError] = useState<Error | null>(null);
-  const [mounted, setMounted] = useState(false);
   const profileUnsubscribeRef = useRef<(() => void) | null>(null);
   const lastUidRef = useRef<string | null>(null);
 
   useEffect(() => {
-    setMounted(true);
-
     const unsubscribeAuth = onAuthStateChanged(
       auth,
       (firebaseUser) => {
@@ -93,6 +93,11 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
           if (lastUidRef.current !== firebaseUser.uid) {
             setIsProfileLoading(true);
             lastUidRef.current = firebaseUser.uid;
+            // Silently re-issue the __session cookie so middleware never rejects
+            // a user whose cookie expired while Firebase kept them logged in.
+            firebaseUser.getIdToken().then(idToken => {
+              createSession(idToken).catch(() => {});
+            });
           }
           setUser(firebaseUser);
 
@@ -172,24 +177,6 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
     };
   }, [firebaseApp, firestore, auth, user, derivedRole, isApproved, isLoading, authError]);
 
-  if (!mounted) return null;
-
-  // Block the render tree only while a signed-in user's profile is still loading.
-  // Public pages (landing, courses, projects) load without any delay.
-  if (user && isProfileLoading) {
-    return (
-      <div className="fixed inset-0 flex flex-col items-center justify-center bg-background z-50">
-        <Loader2 className="h-10 w-10 text-accent animate-spin mb-4" />
-        <h2 className="text-lg font-bold font-headline tracking-tight text-primary">
-          FUSION8
-        </h2>
-        <p className="text-muted-foreground text-xs font-medium tracking-widest mt-1">
-          Synchronizing...
-        </p>
-      </div>
-    );
-  }
-
   if (user && derivedRole === 'teacher' && isApproved === false) {
     return (
       <div className="fixed inset-0 flex flex-col items-center justify-center bg-background z-50 p-6 text-center">
@@ -207,13 +194,13 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
           </p>
           <div className="flex flex-col gap-3">
             <Button
-              onClick={() => window.location.reload()}
+              onClick={() => router.refresh()}
               className="w-full h-12 font-bold"
             >
               Check Status
             </Button>
             <Button
-              onClick={() => signOut()}
+              onClick={() => { router.push('/'); signOut(); }}
               variant="outline"
               className="w-full h-12"
             >
@@ -266,5 +253,14 @@ export const useFirebaseApp = (): FirebaseApp => useFirebase().firebaseApp;
 export const useUser = (): FirebaseServicesAndUser => useFirebase();
 
 export function useMemoFirebase<T>(factory: () => T, deps: DependencyList): T {
-  return useMemo(factory, deps);
+  return useMemo(() => {
+    const result = factory();
+    // Stamp __memo so useCollection's memoization guard passes.
+    // Without this, useCollection throws on every non-null query.
+    if (result !== null && result !== undefined && typeof result === 'object') {
+      (result as any).__memo = true;
+    }
+    return result;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, deps);
 }

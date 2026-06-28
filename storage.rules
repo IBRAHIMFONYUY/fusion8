@@ -1,0 +1,37 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    // Public assets: course thumbnails, static media uploaded by admin/teacher
+    match /public/{allPaths=**} {
+      allow read:  if true;
+      allow write: if false; // Admin SDK only
+    }
+
+    // User profile photos — owner can write their own, any authenticated user can read
+    match /users/{userId}/{allPaths=**} {
+      allow read:  if request.auth != null;
+      allow write: if request.auth != null
+                   && request.auth.uid == userId
+                   && request.resource.size < 5 * 1024 * 1024    // 5 MB limit
+                   && request.resource.contentType.matches('image/.*');
+    }
+
+    // Course materials (video, PDFs) — authenticated read, server-side write only
+    match /courses/{courseId}/{allPaths=**} {
+      allow read:  if request.auth != null;
+      allow write: if false; // Upload via Admin SDK or signed upload URLs
+    }
+
+    // Certificates — publicly readable for external verification, server-generated
+    match /certificates/{allPaths=**} {
+      allow read:  if true;
+      allow write: if false; // Generated server-side by certificate-service.ts
+    }
+
+    // Default deny
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

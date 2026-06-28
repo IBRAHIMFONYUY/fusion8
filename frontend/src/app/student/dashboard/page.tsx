@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import NextLink from 'next/link';
 import Image from 'next/image';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -134,6 +135,7 @@ function OnboardingState({ name }: { name: string | null }) {
 // ── Main dashboard ────────────────────────────────────────────────────────────
 export default function StudentDashboardPage() {
   const { user, firestore, isLoading: authLoading } = useAuth();
+  const router = useRouter();
   const [activeCourses, setActiveCourses] = useState<any[]>([]);
   const [streak, setStreak] = useState(0);
   const [lessonsCompleted, setLessonsCompleted] = useState(0);
@@ -452,7 +454,7 @@ export default function StudentDashboardPage() {
                       <div
                         key={b.id}
                         className="p-4 hover:bg-black/[0.05] transition-colors cursor-pointer"
-                        onClick={() => (window.location.href = '/student/live')}
+                        onClick={() => router.push('/student/live')}
                       >
                         <div className="flex justify-between items-start gap-2 mb-1">
                           <p className="font-semibold text-sm leading-tight line-clamp-1">{b.title}</p>
@@ -504,7 +506,7 @@ export default function StudentDashboardPage() {
                       <div
                         key={a.id}
                         className="p-3 bg-background rounded-xl border border-border hover:border-accent/30 transition-colors cursor-pointer flex items-start justify-between gap-2"
-                        onClick={() => (window.location.href = '/student/assignments')}
+                        onClick={() => router.push('/student/assignments')}
                       >
                         <div className="flex-1 min-w-0">
                           <p className="font-medium text-sm leading-snug line-clamp-1">{a.title}</p>

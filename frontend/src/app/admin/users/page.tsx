@@ -1,8 +1,9 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { collection, query, doc, updateDoc, setDoc, addDoc, serverTimestamp, deleteDoc, getDocs, writeBatch, orderBy } from 'firebase/firestore';
+import { collection, query, doc, updateDoc, addDoc, serverTimestamp, deleteDoc, getDocs, writeBatch, orderBy } from 'firebase/firestore';
 import { firestore, useAuth, useCollection, useMemoFirebase } from '@/firebase';
+import { approveTeacher, rejectTeacher } from '@/lib/auth-actions';
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -141,19 +142,28 @@ export default function AdminUsersPage() {
         }
     };
 
-    const handleApproveTeacher = async (appId: string, email: string) => {
-        try {
-            await updateDoc(doc(firestore, 'teacher_applications', appId), { status: 'approved' });
-            await setDoc(doc(firestore, 'approved_teacher_emails', email.toLowerCase()), { approvedAt: serverTimestamp() });
-            toast({ title: "Whitelisted", description: `${email} can now register as a Lecturer.` });
-        } catch (error) { toast({ variant: 'destructive', title: "Error" }); }
+    const handleApproveTeacher = async (appId: string, email: string, teacherUid?: string) => {
+        // Must call the server action — it atomically writes:
+        // users/{uid}.approved, approved_teachers/{uid}, teacher_applications/{id}.status,
+        // and approved_teacher_emails/{email}. Client-only writes missed the first two,
+        // leaving approved teachers permanently stuck on the vetting screen.
+        const uid = teacherUid ?? appId;
+        const result = await approveTeacher({ teacherUid: uid, applicationId: appId, email });
+        if (result.success) {
+            toast({ title: "Approved", description: `${email} now has full lecturer access.` });
+        } else {
+            toast({ variant: 'destructive', title: "Approval Failed", description: result.error });
+        }
     };
 
-    const handleRejectTeacher = async (appId: string) => {
-        try {
-            await updateDoc(doc(firestore, 'teacher_applications', appId), { status: 'rejected' });
+    const handleRejectTeacher = async (appId: string, teacherUid?: string) => {
+        const uid = teacherUid ?? appId;
+        const result = await rejectTeacher(uid);
+        if (result.success) {
             toast({ title: "Rejected" });
-        } catch (error) { toast({ variant: 'destructive', title: "Error" }); }
+        } else {
+            toast({ variant: 'destructive', title: "Rejection Failed", description: result.error });
+        }
     };
 
     // CMS Handlers
@@ -522,10 +532,10 @@ export default function AdminUsersPage() {
                                 <TableCell className="text-right px-6 align-top pt-4">
                                     {app.status === 'pending' && (
                                         <div className="flex gap-2 justify-end">
-                                            <Button variant="outline" size="sm" className="text-green-600 border-green-200 hover:bg-green-50" onClick={() => handleApproveTeacher(app.id, app.email)}>
+                                            <Button variant="outline" size="sm" className="text-green-600 border-green-200 hover:bg-green-50" onClick={() => handleApproveTeacher(app.id, app.email, app.uid ?? app.userId)}>
                                                 <Check className="h-4 w-4 mr-1" /> Approve
                                             </Button>
-                                            <Button variant="outline" size="sm" className="text-red-600 border-red-200 hover:bg-red-50" onClick={() => handleRejectTeacher(app.id)}>
+                                            <Button variant="outline" size="sm" className="text-red-600 border-red-200 hover:bg-red-50" onClick={() => handleRejectTeacher(app.id, app.uid ?? app.userId)}>
                                                 <X className="h-4 w-4 mr-1" /> Reject
                                             </Button>
                                         </div>

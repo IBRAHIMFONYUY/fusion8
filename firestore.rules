@@ -5,39 +5,45 @@ service cloud.firestore {
     // =========================================================================
     // ── 1. HELPER FUNCTIONS ──────────────────────────────────────────────────
     // =========================================================================
-    
+
     // Authentication
     function isAuth() {
       return request.auth != null;
     }
-    
-    // Custom Claims Lookup (Replaces expensive and insecure get() queries)
-    function getRole() {
-      return request.auth.token.get('role', '');
+
+    // Role checks via security marker documents.
+    // Custom claims are NOT used — claims are never set in this codebase.
+    // roles_admin/{uid} and approved_teachers/{uid} are written exclusively
+    // by the Admin SDK (server-side auth-actions.ts), never by the client.
+    function isAdmin() {
+      return isAuth() && exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid));
     }
 
-    // Reusable Role Checks
-    function isAdmin()       { return isAuth() && (getRole() == 'admin'     || request.auth.token.get('admin', false) == true); }
-    function isTeacher()     { return isAuth() && (getRole() == 'teacher'   || request.auth.token.get('teacher', false) == true); }
-    function isMentor()      { return isAuth() && (getRole() == 'mentor'    || request.auth.token.get('mentor', false) == true); }
-    function isInvestor()    { return isAuth() && (getRole() == 'investor'  || request.auth.token.get('investor', false) == true); }
-    function isInnovator()   { return isAuth() && (getRole() == 'innovator' || request.auth.token.get('innovator', false) == true); }
-    function isJudge()       { return isAuth() && (getRole() == 'judge'     || request.auth.token.get('judge', false) == true); }
-    function isPartner()     { return isAuth() && (getRole() == 'partner'   || request.auth.token.get('partner', false) == true); }
-    
-    function isAdminOrTeacher() { 
-      return isAdmin() || isTeacher(); 
+    function isTeacher() {
+      return isAuth() && exists(/databases/$(database)/documents/approved_teachers/$(request.auth.uid));
+    }
+
+    // These roles are reserved for future expansion and will always return false
+    // until the Admin SDK sets the corresponding marker documents.
+    function isMentor()    { return isAuth() && request.auth.token.get('role', '') == 'mentor'; }
+    function isInvestor()  { return isAuth() && request.auth.token.get('role', '') == 'investor'; }
+    function isInnovator() { return isAuth() && request.auth.token.get('role', '') == 'innovator'; }
+    function isJudge()     { return isAuth() && request.auth.token.get('role', '') == 'judge'; }
+    function isPartner()   { return isAuth() && request.auth.token.get('role', '') == 'partner'; }
+
+    function isAdminOrTeacher() {
+      return isAdmin() || isTeacher();
     }
 
     // Ownership Checks
-    function isOwner(uid) { 
-      return isAuth() && request.auth.uid == uid; 
+    function isOwner(uid) {
+      return isAuth() && request.auth.uid == uid;
     }
-    
+
     function isDocOwner(field) {
       return isAuth() && resource.data.get(field, '') == request.auth.uid;
     }
-    
+
     // Prevents ownership spoofing during document creation
     function isCreatingWithOwner(field) {
       return isAuth() && request.resource.data.get(field, '') == request.auth.uid;
@@ -46,20 +52,21 @@ service cloud.firestore {
     // Prevents privilege escalation and unauthorized status modifications
     function notUpdatingProtected() {
       let protectedFields = [
-        'role', 'status', 'approvalStatus', 'approved', 
-        'founderId', 'leadStudentId', 'studentId', 
+        'role', 'status', 'approvalStatus', 'approved',
+        'founderId', 'leadStudentId', 'studentId',
         'studentLeadId', 'userId', 'mentorId', 'innovatorId', 'investorId'
       ];
       return !request.resource.data.diff(resource.data).affectedKeys().hasAny(protectedFields);
     }
-    
-    // Enforces secure defaults when users create their own documents
+
+    // CEO identified by email only — no hardcoded UIDs.
+    // The CEO email must match the one in teacher_applications / user profile.
+    function isCEOEmail() {
+      return request.auth.token.email == 'ceo@fusion8.com';
+    }
+
     function isTeacherEmail() {
       return exists(/databases/$(database)/documents/approved_teacher_emails/$(request.auth.token.email));
-    }
-    
-    function isCEOEmail() {
-      return request.auth.token.email == 'ceo@fusion8.com' || request.auth.uid == 'x8rM4ioT6jTMU0rEfy2ujMQ0sFy1';
     }
 
     function safeCreate() {
@@ -68,7 +75,7 @@ service cloud.firestore {
       let validStudent = role == 'student';
       let validTeacher = role == 'teacher' && isTeacherEmail();
       let validAdmin = role == 'admin' && isCEOEmail();
-      
+
       return validStudent || validTeacher || validAdmin;
     }
 
@@ -87,7 +94,7 @@ service cloud.firestore {
 
     // ── Courses
     match /courses/{courseId} {
-      allow read:   if true; 
+      allow read:   if true;
       allow create: if isAdminOrTeacher() && isCreatingWithOwner('teacherId');
       allow update, delete: if isAdminOrTeacher();
 
@@ -181,7 +188,7 @@ service cloud.firestore {
       allow read:   if true;
       allow create: if isAuth() && isCreatingWithOwner('userId');
       allow delete: if isAuth() && isDocOwner('userId');
-      allow update: if false; // Immutable, users must delete and recreate if needed
+      allow update: if false; // Immutable — delete and recreate
     }
 
     match /blog_bookmarks/{bookmarkId} {
@@ -205,8 +212,12 @@ service cloud.firestore {
 
 
     // =========================================================================
-    // ── 3. ECOSYSTEM (Startups, Mentorship, Cohorts) ─────────────────────────
+    // ── 3. SECURITY MARKER COLLECTIONS ───────────────────────────────────────
     // =========================================================================
+    // These collections are written ONLY by the Admin SDK (server-side).
+    // Granting client write access would allow privilege escalation.
+    // The CEO bootstraps their own roles_admin entry via the adminCreateUser
+    // server action; all subsequent writes are done server-side.
 
     match /approved_teacher_emails/{emailId} {
       allow read: if true;
@@ -214,14 +225,19 @@ service cloud.firestore {
     }
 
     match /roles_admin/{userId} {
-      allow read: if isAuth();
-      allow write: if request.auth.uid == userId && (request.auth.token.email == 'ceo@fusion8.com' || request.auth.uid == 'x8rM4ioT6jTMU0rEfy2ujMQ0sFy1');
+      allow read:  if isAuth();
+      allow write: if false; // Admin SDK only — client cannot self-promote to admin
     }
 
     match /approved_teachers/{userId} {
-      allow read: if isAuth();
-      allow write: if request.auth.uid == userId && (exists(/databases/$(database)/documents/approved_teacher_emails/$(request.auth.token.email)) || isAdmin());
+      allow read:  if isAuth();
+      allow write: if false; // Admin SDK only via approveTeacher() server action
     }
+
+
+    // =========================================================================
+    // ── 4. ECOSYSTEM (Startups, Mentorship, Cohorts) ─────────────────────────
+    // =========================================================================
 
     match /startups/{startupId} {
       allow read:   if isAuth();
@@ -239,8 +255,8 @@ service cloud.firestore {
 
     match /mentor_notes/{noteId} {
       // Notes are hidden from students if marked private
-      allow read:   if isAdmin() 
-                    || isDocOwner('mentorId') 
+      allow read:   if isAdmin()
+                    || isDocOwner('mentorId')
                     || (!resource.data.get('private', false) && isDocOwner('studentId'));
       allow create: if isAdminOrTeacher();
       allow update: if isDocOwner('mentorId') && notUpdatingProtected();
@@ -254,7 +270,7 @@ service cloud.firestore {
 
 
     // =========================================================================
-    // ── 4. FUTURE EXPANSIONS ─────────────────────────────────────────────────
+    // ── 5. FUTURE EXPANSIONS ─────────────────────────────────────────────────
     // =========================================================================
 
     match /innovations/{innovationId} {
@@ -263,55 +279,55 @@ service cloud.firestore {
       allow update: if isAdmin() || (isDocOwner('innovatorId') && notUpdatingProtected());
       allow delete: if isAdmin();
     }
-    
+
     match /startup_pitches/{pitchId} {
       allow read:   if isAdmin() || isInvestor() || isDocOwner('founderId');
       allow create: if isAuth() && isCreatingWithOwner('founderId') && safeCreate();
       allow update: if isAdmin() || (isDocOwner('founderId') && notUpdatingProtected());
       allow delete: if isAdmin();
     }
-    
+
     match /funding_rounds/{roundId} {
       allow read:   if isAuth();
       allow write:  if isAdmin();
     }
-    
+
     match /grants/{grantId} {
       allow read:   if isAuth();
       allow write:  if isAdmin();
     }
-    
+
     match /innovation_challenges/{challengeId} {
       allow read:   if isAuth();
       allow write:  if isAdmin();
     }
-    
+
     match /investor_reviews/{reviewId} {
       allow read:   if isAdmin() || isDocOwner('investorId') || isDocOwner('startupId');
       allow create: if isInvestor() && isCreatingWithOwner('investorId');
       allow update: if isAdmin() || (isDocOwner('investorId') && notUpdatingProtected());
       allow delete: if isAdmin();
     }
-    
+
     match /lab_bookings/{bookingId} {
       allow read:   if isAdminOrTeacher() || isDocOwner('userId');
       allow create: if isAuth() && isCreatingWithOwner('userId');
       allow update: if isAdminOrTeacher() || (isDocOwner('userId') && notUpdatingProtected());
       allow delete: if isAdminOrTeacher() || isDocOwner('userId');
     }
-    
+
     match /equipment/{equipmentId} {
       allow read:   if isAuth();
       allow write:  if isAdminOrTeacher();
     }
-    
+
     match /certificates/{certificateId} {
-      allow read:   if true; // Usually public for external verification
+      allow read:   if true; // Public for external verification
       allow write:  if isAdminOrTeacher();
     }
-    
+
     match /badges/{badgeId} {
-      allow read:   if true; // Usually public
+      allow read:   if true; // Public
       allow write:  if isAdminOrTeacher();
     }
   }

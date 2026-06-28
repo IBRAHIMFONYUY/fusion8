@@ -31,7 +31,7 @@ export function AuthForm() {
   const { toast } = useToast();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const returnTo = searchParams.get('returnTo');
+  const returnTo = searchParams.get('redirect') ?? searchParams.get('returnTo');
   
   const [isPending, setIsPending] = useState(false);
   const [activeTab, setActiveTab] = useState<'login' | 'register'>('login');
@@ -55,7 +55,7 @@ export function AuthForm() {
       if (result.success) {
         toast({ title: "Welcome back!", description: "Accessing your secure workspace..." });
         const target = returnTo || `/${result.role}/dashboard`;
-        window.location.href = target;
+        router.push(target);
       } else {
         const errorMsg = (result as any).error;
         if (errorMsg.includes('auth/popup-blocked') || errorMsg.includes('popup')) {
@@ -110,7 +110,7 @@ export function AuthForm() {
             setIsPending(false);
           } else {
             toast({ title: "Account Created", description: `Welcome to Fusion8 as a ${values.role}.` });
-            window.location.href = returnTo || `/${result.role}/dashboard`;
+            router.push(returnTo || `/${result.role}/dashboard`);
           }
         } else {
           toast({ variant: "destructive", title: "Registration failed", description: (result as any).error });
@@ -120,7 +120,7 @@ export function AuthForm() {
         const result = await signInUser(values.email, values.password);
         if (result.success) {
           toast({ title: "Identity Verified", description: `Welcome back, ${result.role}.` });
-          window.location.href = returnTo || `/${result.role}/dashboard`;
+          router.push(returnTo || `/${result.role}/dashboard`);
         } else {
           toast({ variant: "destructive", title: "Login failed", description: (result as any).error });
           setIsPending(false);

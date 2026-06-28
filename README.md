@@ -103,7 +103,7 @@ Open `fusion8.code-workspace` — this configures correct TypeScript paths and I
 LEARN  →  BUILD  →  LAUNCH
   ↓          ↓         ↓
 Courses   Production  Entrepreneur
-Online +  Lab (Yaounde) Support
+Online +  Lab (bamendae) Support
 Onsite    Robotics/IoT  Investors
 ```
 

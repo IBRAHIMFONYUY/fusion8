@@ -1,24 +1,7 @@
 import type { Metadata, Viewport } from 'next';
-import { Inter, JetBrains_Mono } from 'next/font/google';
 import { Toaster } from '@/components/ui/toaster';
 import { FirebaseClientProvider } from '@/firebase/client-provider';
 import './globals.css';
-
-// Self-hosted via next/font — no CDN round-trip, no GDPR data transfer to Google,
-// no render-blocking <link>. Fonts are inlined as data URIs in the CSS.
-const inter = Inter({
-  subsets: ['latin'],
-  variable: '--font-inter',
-  display: 'swap',
-  weight: ['400', '500', '600', '700', '900'],
-});
-
-const jetbrainsMono = JetBrains_Mono({
-  subsets: ['latin'],
-  variable: '--font-jetbrains-mono',
-  display: 'swap',
-  weight: ['400', '500', '700'],
-});
 
 export const viewport: Viewport = {
   width: 'device-width',
@@ -95,7 +78,7 @@ export default function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      className={`${inter.variable} ${jetbrainsMono.variable}`}
+      className=""
     >
       <body className="min-h-screen bg-background text-foreground antialiased font-body">
         <FirebaseClientProvider>

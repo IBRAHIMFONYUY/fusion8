@@ -1,0 +1,10 @@
+{
+  "name": "Fusion8",
+  "short_name": "Fusion8",
+  "description": "Africa's Hardtech Innovation Ecosystem",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0A0A0A",
+  "theme_color": "#E8461E",
+  "icons": []
+}

@@ -21,8 +21,8 @@ export function UserNav() {
   const router = useRouter();
 
   const handleLogout = async () => {
-    await signOut();
     router.push("/");
+    await signOut();
   };
 
   const dashboardLink = `/${role || 'student'}/dashboard`;

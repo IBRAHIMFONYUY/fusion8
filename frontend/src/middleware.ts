@@ -18,7 +18,7 @@ function isProtectedPath(pathname: string): boolean {
 }
 
 function buildCSP(): string {
-  const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID ?? '';
+  const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID ?? 'fusion81-77505965-97563';
   const authDomain = process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN ?? `${projectId}.firebaseapp.com`;
   const storageBucket = process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET ?? `${projectId}.appspot.com`;
 
@@ -116,11 +116,20 @@ export function middleware(request: NextRequest) {
 
   // ── Route protection ─────────────────────────────────────────────────────
   if (isProtectedPath(pathname)) {
-    const sessionCookie = request.cookies.get(SESSION_COOKIE);
-    if (!sessionCookie?.value) {
-      const loginUrl = new URL('/login', request.url);
-      loginUrl.searchParams.set('redirect', pathname);
-      return NextResponse.redirect(loginUrl);
+    // RSC navigation and prefetch requests originate from an already-loaded
+    // client that has Firebase auth in memory. Skip the cookie check so
+    // client-side <Link> navigation is never redirected by the server.
+    // RoleGuard handles auth for these in-app transitions.
+    const isRSCNavigation = request.headers.get('RSC') === '1';
+    const isPrefetch = request.headers.get('Next-Router-Prefetch') === '1';
+
+    if (!isRSCNavigation && !isPrefetch) {
+      const sessionCookie = request.cookies.get(SESSION_COOKIE);
+      if (!sessionCookie?.value) {
+        const loginUrl = new URL('/login', request.url);
+        loginUrl.searchParams.set('redirect', pathname);
+        return NextResponse.redirect(loginUrl);
+      }
     }
   }
 

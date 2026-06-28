@@ -3,6 +3,7 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/firebase';
+import { createSession } from '@/lib/auth-actions';
 import { Suspense } from 'react';
 import { AuthForm } from '@/components/auth-form';
 import { Footer } from '@/components/footer';
@@ -13,11 +14,20 @@ export default function LoginPage() {
   const { user, role, isLoading } = useAuth();
   const router = useRouter();
 
-  // Role-based Auto-Redirect: Send logged-in users straight to their dashboard
+  // When Firebase restores auth from IndexedDB the __session cookie may have
+  // expired. Re-issue it before navigating so middleware never loops back here.
   useEffect(() => {
-    if (!isLoading && user && role) {
-      router.push(`/${role}/dashboard`);
-    }
+    if (isLoading || !user || !role) return;
+
+    const returnTo = new URLSearchParams(window.location.search).get('redirect');
+
+    user.getIdToken().then(async (idToken) => {
+      const result = await createSession(idToken);
+      if (result.success) {
+        router.push(returnTo || `/${role}/dashboard`);
+      }
+      // If createSession fails the user stays on the login page — no loop.
+    });
   }, [user, role, isLoading, router]);
 
   if (isLoading) {

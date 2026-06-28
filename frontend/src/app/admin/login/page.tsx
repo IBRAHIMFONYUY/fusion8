@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Shield, Loader2, AlertCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { signInUser, PLATFORM_ADMIN_EMAIL, adminResetUserPassword } from '@/lib/auth';
+import { signInUser, signOut, PLATFORM_ADMIN_EMAIL, adminResetUserPassword } from '@/lib/auth';
 import { useRouter } from 'next/navigation';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
@@ -26,29 +26,25 @@ export default function AdminLoginPage() {
 
     try {
       const result = await signInUser(email, password);
-      
-      if (result.success) {
-        if (result.role !== 'admin' && email.toLowerCase() !== PLATFORM_ADMIN_EMAIL) {
-            setError("Unauthorized: This portal requires Administrative credentials.");
-            setLoading(false);
-            return;
-        }
-        
-        toast({ 
-            title: "Identity Verified", 
-            description: "Accessing platform governance dashboard..." 
-        });
-        
-        // Wait for Firestore markers to propagate slightly
-        setTimeout(() => {
-            router.push('/admin/dashboard');
-        }, 1000);
-      } else if ('error' in result) {
-        setError(result.error || "Invalid credentials.");
+
+      if (!result.success) {
+        setError((result as any).error || "Invalid credentials.");
+        setLoading(false);
+        return;
       }
+
+      if (result.role !== 'admin' && email.toLowerCase() !== PLATFORM_ADMIN_EMAIL) {
+        await signOut();
+        setError("Unauthorized: This portal requires Administrative credentials.");
+        setLoading(false);
+        return;
+      }
+
+      toast({ title: "Identity Verified", description: "Accessing platform governance dashboard..." });
+      router.push('/admin/dashboard');
+      // Keep loading=true until the page unmounts — prevents button flash.
     } catch (err) {
       setError("Critical: Gateway connection failed. Please check your network.");
-    } finally {
       setLoading(false);
     }
   };
