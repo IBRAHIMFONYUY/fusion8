@@ -1,17 +1,18 @@
 'use client';
 
-import { 
-  createUserWithEmailAndPassword, 
-  signInWithEmailAndPassword, 
+import {
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
   signOut as firebaseSignOut,
   signInWithPopup,
   GoogleAuthProvider,
   sendPasswordResetEmail,
   sendEmailVerification,
-  AuthError
+  AuthError,
 } from 'firebase/auth';
 import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, firestore } from '@/firebase';
+import { createSession, destroySession } from '@/lib/auth-actions';
 
 export type UserRole = 'student' | 'teacher' | 'admin';
 
@@ -31,51 +32,103 @@ export interface UserProfile {
   mentorName?: string;
 }
 
-export const PLATFORM_ADMIN_EMAIL = 'ceo@fusion8.com';
+// These are loaded from environment variables — never hardcode credentials in source.
+// Set in .env.local (local dev) and Vercel / hosting env vars (production).
+export const PLATFORM_ADMIN_EMAIL =
+  process.env.NEXT_PUBLIC_PLATFORM_ADMIN_EMAIL ?? 'ceo@fusion8.com';
+
+const PLATFORM_ADMIN_UID =
+  process.env.NEXT_PUBLIC_PLATFORM_ADMIN_UID ?? '';
+
+function isCEO(email: string | null | undefined, uid: string): boolean {
+  if (PLATFORM_ADMIN_UID && uid === PLATFORM_ADMIN_UID) return true;
+  return !!email && email.toLowerCase() === PLATFORM_ADMIN_EMAIL.toLowerCase();
+}
 
 function mapAuthError(error: AuthError): string {
-  console.error("Firebase Auth Error:", error.code, error.message);
   switch (error.code) {
-    case 'auth/email-already-in-use': return 'Email already registered.';
-    case 'auth/invalid-credential': 
-    case 'auth/invalid-login-credentials': return 'Invalid email or password.';
-    case 'auth/weak-password': return 'Password must be at least 6 characters.';
-    case 'auth/user-not-found': return 'Account not found.';
-    case 'auth/invalid-email': return 'Invalid email format. Please check for spaces.';
-    case 'auth/network-request-failed': return 'Network error. Please check your connection.';
-    case 'auth/too-many-requests': return 'Too many attempts. Please try again later.';
-    default: return `Authentication failed: ${error.message || 'Please check your credentials.'}`;
+    case 'auth/email-already-in-use':
+      return 'This email is already registered. Try logging in instead.';
+    case 'auth/invalid-credential':
+    case 'auth/invalid-login-credentials':
+      return 'Invalid email or password.';
+    case 'auth/weak-password':
+      return 'Password must be at least 6 characters.';
+    case 'auth/user-not-found':
+      return 'No account found with this email.';
+    case 'auth/invalid-email':
+      return 'Invalid email format. Please check for extra spaces.';
+    case 'auth/network-request-failed':
+      return 'Network error. Please check your connection and try again.';
+    case 'auth/too-many-requests':
+      return 'Too many attempts. Please wait a few minutes before trying again.';
+    case 'auth/popup-closed-by-user':
+      return 'Sign-in popup was closed. Please try again.';
+    case 'auth/popup-blocked':
+      return 'Popup blocked by your browser. Please allow popups for this site.';
+    default:
+      return `Authentication failed. Please try again. (${error.code})`;
   }
 }
 
 /**
- * Ensures O(1) high-performance security markers are in place for Admins/Teachers
+ * Creates O(1) security marker documents for Firestore rule evaluation.
+ * roles_admin/{uid} → admin check
+ * approved_teachers/{uid} → teacher access check
  */
-async function ensureSecurityMarkers(uid: string, role: UserRole, approved?: boolean, email?: string | null) {
-  const isCEO = email?.toLowerCase() === PLATFORM_ADMIN_EMAIL || uid === 'x8rM4ioT6jTMU0rEfy2ujMQ0sFy1';
-  
-  if (role === 'admin' || isCEO) {
-    await setDoc(doc(firestore, 'roles_admin', uid), { active: true, updatedAt: serverTimestamp() }, { merge: true });
+async function ensureSecurityMarkers(
+  uid: string,
+  role: UserRole,
+  approved?: boolean,
+  email?: string | null
+) {
+  const ceo = isCEO(email, uid);
+
+  if (role === 'admin' || ceo) {
+    await setDoc(
+      doc(firestore, 'roles_admin', uid),
+      { active: true, updatedAt: serverTimestamp() },
+      { merge: true }
+    );
   } else if (role === 'teacher' && approved) {
-    await setDoc(doc(firestore, 'approved_teachers', uid), { active: true, updatedAt: serverTimestamp() }, { merge: true });
+    await setDoc(
+      doc(firestore, 'approved_teachers', uid),
+      { active: true, updatedAt: serverTimestamp() },
+      { merge: true }
+    );
   }
 }
 
-export async function signUpUser(email: string, password: string, name: string, role: UserRole = 'student') {
+export async function signUpUser(
+  email: string,
+  password: string,
+  name: string,
+  role: UserRole = 'student'
+) {
   try {
-    const normalizedEmail = email.toLowerCase();
-    const userCredential = await createUserWithEmailAndPassword(auth, normalizedEmail, password);
+    const normalizedEmail = email.toLowerCase().trim();
+    const userCredential = await createUserWithEmailAndPassword(
+      auth,
+      normalizedEmail,
+      password
+    );
     const user = userCredential.user;
-    
+
     let finalRole: UserRole = 'student';
     let isApproved = true;
-    
-    if (normalizedEmail === PLATFORM_ADMIN_EMAIL || user.uid === 'x8rM4ioT6jTMU0rEfy2ujMQ0sFy1') {
+
+    if (isCEO(normalizedEmail, user.uid)) {
       finalRole = 'admin';
     } else {
-      const teacherEmailDoc = await getDoc(doc(firestore, 'approved_teacher_emails', normalizedEmail));
+      const teacherEmailDoc = await getDoc(
+        doc(firestore, 'approved_teacher_emails', normalizedEmail)
+      );
       if (teacherEmailDoc.exists()) {
         finalRole = 'teacher';
+        isApproved = true;
+      } else if (role === 'teacher') {
+        finalRole = 'teacher';
+        isApproved = false;
       }
     }
 
@@ -89,23 +142,28 @@ export async function signUpUser(email: string, password: string, name: string, 
       accountType: 'email',
       onboardingCompleted: false,
       photoURL: `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.uid}`,
-      approved: isApproved
+      approved: isApproved,
     };
 
-    // Ensure markers exist BEFORE returning success to the provider
     await ensureSecurityMarkers(user.uid, finalRole, isApproved, normalizedEmail);
     await setDoc(doc(firestore, 'users', user.uid), userProfile);
-    
+
     try {
       await sendEmailVerification(user);
-    } catch (err) {
-      console.error('Failed to send verification email', err);
+    } catch {
+      // Non-fatal: account created, verification email delivery failed
     }
 
-    // Log the user out immediately so they must verify their email to log back in
+    // Sign out immediately — user must verify email before accessing the platform
     await firebaseSignOut(auth);
-    
-    return { success: true, uid: user.uid, role: finalRole, approved: isApproved, requiresVerification: true };
+
+    return {
+      success: true,
+      uid: user.uid,
+      role: finalRole,
+      approved: isApproved,
+      requiresVerification: true,
+    };
   } catch (error: any) {
     return { success: false, error: mapAuthError(error) };
   }
@@ -116,22 +174,25 @@ export async function signInWithGoogle() {
     const provider = new GoogleAuthProvider();
     const userCredential = await signInWithPopup(auth, provider);
     const user = userCredential.user;
+    const email = user.email?.toLowerCase();
+    const ceo = isCEO(email, user.uid);
+
     const docRef = doc(firestore, 'users', user.uid);
     const userDoc = await getDoc(docRef);
 
-    const email = user.email?.toLowerCase();
-    const isCEO = email === PLATFORM_ADMIN_EMAIL || user.uid === 'x8rM4ioT6jTMU0rEfy2ujMQ0sFy1';
+    let finalRole: UserRole = 'student';
+    let isApproved = true;
 
     if (!userDoc.exists()) {
-      let finalRole: UserRole = 'student';
-      if (isCEO) {
+      if (ceo) {
         finalRole = 'admin';
       } else {
-        const teacherEmailDoc = await getDoc(doc(firestore, 'approved_teacher_emails', email!));
-        if (teacherEmailDoc.exists()) {
-          finalRole = 'teacher';
-        }
+        const teacherEmailDoc = await getDoc(
+          doc(firestore, 'approved_teacher_emails', email!)
+        );
+        if (teacherEmailDoc.exists()) finalRole = 'teacher';
       }
+
       const userProfile: UserProfile = {
         id: user.uid,
         email: email!,
@@ -141,27 +202,38 @@ export async function signInWithGoogle() {
         lastLogin: serverTimestamp(),
         accountType: 'google',
         onboardingCompleted: false,
-        photoURL: user.photoURL || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.uid}`,
-        approved: true
+        photoURL:
+          user.photoURL ||
+          `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.uid}`,
+        approved: isApproved,
       };
-      await ensureSecurityMarkers(user.uid, finalRole, true, email);
+      await ensureSecurityMarkers(user.uid, finalRole, isApproved, email);
       await setDoc(docRef, userProfile);
-      return { success: true, uid: user.uid, role: finalRole, approved: true };
+    } else {
+      const data = userDoc.data() as UserProfile;
+      finalRole = data.role;
+      isApproved = data.approved ?? true;
+
+      const updates: Partial<UserProfile> & { lastLogin: any } = {
+        lastLogin: serverTimestamp(),
+      };
+
+      if (ceo && data.role !== 'admin') {
+        updates.role = 'admin';
+        updates.approved = true;
+        finalRole = 'admin';
+        isApproved = true;
+      }
+
+      await setDoc(docRef, updates, { merge: true });
+      await ensureSecurityMarkers(user.uid, finalRole, isApproved, email);
     }
 
-    const data = userDoc.data() as UserProfile;
-    const updateData: any = { lastLogin: serverTimestamp() };
-    
-    if (isCEO && data.role !== 'admin') {
-        updateData.role = 'admin';
-        updateData.approved = true;
-        data.role = 'admin';
-        data.approved = true;
-    }
-    
-    await setDoc(docRef, updateData, { merge: true });
-    await ensureSecurityMarkers(user.uid, data.role, data.approved, email);
-    return { success: true, uid: user.uid, role: data.role, approved: data.approved };
+    // Issue session cookie so middleware protects routes immediately
+    const idToken = await user.getIdToken();
+    await createSession(idToken);
+
+    return { success: true, uid: user.uid, role: finalRole, approved: isApproved };
   } catch (error: any) {
     return { success: false, error: mapAuthError(error) };
   }
@@ -169,57 +241,64 @@ export async function signInWithGoogle() {
 
 export async function signInUser(email: string, password: string) {
   const normalizedEmail = email.trim().toLowerCase();
-  
+
   try {
-    const userCredential = await signInWithEmailAndPassword(auth, normalizedEmail, password);
+    const userCredential = await signInWithEmailAndPassword(
+      auth,
+      normalizedEmail,
+      password
+    );
     const user = userCredential.user;
-    const isCEO = normalizedEmail === PLATFORM_ADMIN_EMAIL || user.uid === 'x8rM4ioT6jTMU0rEfy2ujMQ0sFy1';
-    
-    if (!user.emailVerified && !isCEO) {
+    const ceo = isCEO(normalizedEmail, user.uid);
+
+    if (!user.emailVerified && !ceo) {
       await firebaseSignOut(auth);
-      return { success: false, error: 'Please verify your email address before signing in. Check your inbox (or spam folder) for the verification link.' };
+      return {
+        success: false,
+        error:
+          'Please verify your email before signing in. Check your inbox (or spam folder) for the verification link.',
+      };
     }
 
     const userDoc = await getDoc(doc(firestore, 'users', user.uid));
-    
+    let finalRole: UserRole = ceo ? 'admin' : 'student';
+    let isApproved = true;
+
     if (!userDoc.exists()) {
-      const role: UserRole = isCEO ? 'admin' : 'student';
-      const approved = true;
-      
-      await ensureSecurityMarkers(user.uid, role, approved, normalizedEmail);
+      await ensureSecurityMarkers(user.uid, finalRole, isApproved, normalizedEmail);
       await setDoc(doc(firestore, 'users', user.uid), {
         id: user.uid,
         email: normalizedEmail,
         displayName: user.displayName || 'User',
-        role: role,
+        role: finalRole,
         createdAt: serverTimestamp(),
         lastLogin: serverTimestamp(),
         accountType: 'email',
         onboardingCompleted: false,
-        approved: approved
+        approved: isApproved,
+        photoURL: `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.uid}`,
       });
-      
-      return { success: true, uid: user.uid, role, approved: approved };
+    } else {
+      const data = userDoc.data() as UserProfile;
+      finalRole = ceo && data.role !== 'admin' ? 'admin' : data.role;
+      isApproved = data.approved ?? true;
+
+      const updates: Record<string, any> = { lastLogin: serverTimestamp() };
+      if (ceo && data.role !== 'admin') {
+        updates.role = 'admin';
+        updates.approved = true;
+      }
+
+      await setDoc(doc(firestore, 'users', user.uid), updates, { merge: true });
+      await ensureSecurityMarkers(user.uid, finalRole, isApproved, normalizedEmail);
     }
 
-    const data = userDoc.data() as UserProfile;
-    const updateData: any = { lastLogin: serverTimestamp() };
+    // Issue session cookie
+    const idToken = await user.getIdToken();
+    await createSession(idToken);
 
-    if (isCEO && data.role !== 'admin') {
-        updateData.role = 'admin';
-        updateData.approved = true;
-        data.role = 'admin';
-        data.approved = true;
-    }
-
-    await setDoc(doc(firestore, 'users', user.uid), updateData, { merge: true });
-    await ensureSecurityMarkers(user.uid, data.role, data.approved, normalizedEmail);
-    return { success: true, uid: user.uid, role: data.role, approved: data.approved };
+    return { success: true, uid: user.uid, role: finalRole, approved: isApproved };
   } catch (error: any) {
-    if (normalizedEmail === PLATFORM_ADMIN_EMAIL && (error.code === 'auth/invalid-credential' || error.code === 'auth/user-not-found')) {
-       const signUpResult = await signUpUser(normalizedEmail, password, 'Platform CEO', 'admin');
-       if (signUpResult.success) return signUpResult;
-    }
     return { success: false, error: mapAuthError(error) };
   }
 }
@@ -227,6 +306,7 @@ export async function signInUser(email: string, password: string) {
 export async function signOut() {
   try {
     await firebaseSignOut(auth);
+    await destroySession();
     return { success: true };
   } catch (error: any) {
     return { success: false, error: error.message };

@@ -5,20 +5,22 @@
  * Requires FIREBASE_ADMIN_* vars set in .env (or hardcoded below for local dev).
  */
 
-import * as admin from 'firebase-admin';
+import { initializeApp, getApps, cert } from 'firebase-admin/app';
+import { getFirestore } from 'firebase-admin/firestore';
 import * as dotenv from 'dotenv';
+dotenv.config({ path: '.env.local' });
 dotenv.config({ path: '.env' });
 
 const serviceAccount = {
-  projectId:   process.env.FIREBASE_ADMIN_PROJECT_ID   || 'fusion81-77505965-97563',
+  projectId:   process.env.FIREBASE_ADMIN_PROJECT_ID   || '',
   clientEmail: process.env.FIREBASE_ADMIN_CLIENT_EMAIL || '',
   privateKey:  (process.env.FIREBASE_ADMIN_PRIVATE_KEY || '').replace(/\\n/g, '\n'),
 };
 
-if (!admin.apps.length) {
-  admin.initializeApp({ credential: admin.credential.cert(serviceAccount as any) });
+if (getApps().length === 0) {
+  initializeApp({ credential: cert(serviceAccount as any) });
 }
-const db = admin.firestore();
+const db = getFirestore();
 
 const COURSES = [
   {
@@ -34,7 +36,7 @@ const COURSES = [
     thumbnail: 'https://images.unsplash.com/photo-1581092918056-0c4c3acd3789?auto=format&fit=crop&w=800&q=80',
     teacherId: 'admin',
     teacherName: 'Fusion 8 Team',
-    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    createdAt: new Date(),
   },
   {
     id: 'course-embedded-001',
@@ -49,7 +51,7 @@ const COURSES = [
     thumbnail: 'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=800&q=80',
     teacherId: 'admin',
     teacherName: 'Fusion 8 Team',
-    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    createdAt: new Date(),
   },
   {
     id: 'course-automotive-001',
@@ -64,7 +66,7 @@ const COURSES = [
     thumbnail: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?auto=format&fit=crop&w=800&q=80',
     teacherId: 'admin',
     teacherName: 'Fusion 8 Team',
-    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    createdAt: new Date(),
   },
   {
     id: 'course-matlab-001',
@@ -79,7 +81,7 @@ const COURSES = [
     thumbnail: 'https://images.unsplash.com/photo-1507146153-c8ff600f1c83?auto=format&fit=crop&w=800&q=80',
     teacherId: 'admin',
     teacherName: 'Fusion 8 Team',
-    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    createdAt: new Date(),
   },
   {
     id: 'course-drone-001',
@@ -94,7 +96,7 @@ const COURSES = [
     thumbnail: 'https://images.unsplash.com/photo-1485827404703-89b55fcc595e?auto=format&fit=crop&w=800&q=80',
     teacherId: 'admin',
     teacherName: 'Fusion 8 Team',
-    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    createdAt: new Date(),
   },
   {
     id: 'course-mechatronics-001',
@@ -109,7 +111,7 @@ const COURSES = [
     thumbnail: 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&w=800&q=80',
     teacherId: 'admin',
     teacherName: 'Fusion 8 Team',
-    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    createdAt: new Date(),
   },
 ];
 

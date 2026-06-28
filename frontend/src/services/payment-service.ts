@@ -1,5 +1,4 @@
-
-import { doc, setDoc, updateDoc, serverTimestamp, getDoc } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { firestore } from '@/firebase';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
@@ -11,38 +10,62 @@ export interface PaymentRequest {
   network: 'MTN' | 'Orange';
   studentId: string;
   courseId: string;
+  courseTitle?: string;
+  studentName?: string;
+}
+
+export interface PaymentInitiationResult {
+  success: boolean;
+  transId?: string;
+  message?: string;
+  alreadyEnrolled?: boolean;
+  error?: string;
+}
+
+export interface EnrollmentStatus {
+  status: 'active' | 'pending_payment' | 'failed' | null;
+  paymentReference?: string;
+  transId?: string;
 }
 
 export const paymentService = {
   /**
-   * Initiates a payment via Fapshi and activates enrollment.
+   * Initiates a real Fapshi mobile money payment via our secure API route.
+   * The API route calls the Fapshi REST API server-side so that the API key
+   * is never exposed in the browser bundle.
+   *
+   * Flow:
+   * 1. Client calls this method
+   * 2. This method calls /api/payments/initiate (our Next.js API route)
+   * 3. API route calls Fapshi /initiate-pay with server-side credentials
+   * 4. Fapshi sends a USSD prompt to the user's phone
+   * 5. User approves on their phone
+   * 6. Fapshi calls our webhook /api/webhooks/fapshi with the result
+   * 7. Webhook activates the enrollment in Firestore
    */
-  async initiatePayment(data: PaymentRequest) {
+  async initiatePayment(data: PaymentRequest): Promise<PaymentInitiationResult> {
     const enrollmentId = `${data.studentId}_${data.courseId}`;
     const enrollmentRef = doc(firestore, 'enrollments', enrollmentId);
 
-    // Guard: if the student is already enrolled, short-circuit so a re-entry
-    // through the dialog cannot overwrite an active record with 'pending_payment'
-    // (which would lock them out of the course).
-    let existing: any = null;
+    // Guard: short-circuit if already enrolled
     try {
       const snap = await getDoc(enrollmentRef);
-      if (snap.exists()) existing = snap.data();
+      if (snap.exists() && snap.data().status === 'active') {
+        return { success: true, alreadyEnrolled: true };
+      }
     } catch (err: any) {
       if (err.code === 'permission-denied') {
-        errorEmitter.emit('permission-error', new FirestorePermissionError({
-          path: enrollmentRef.path,
-          operation: 'get',
-        }));
+        errorEmitter.emit(
+          'permission-error',
+          new FirestorePermissionError({ path: enrollmentRef.path, operation: 'get' })
+        );
       }
       throw err;
     }
 
-    if (existing?.status === 'active') {
-      return { success: true, alreadyEnrolled: true };
-    }
-
-    const initialPayload = {
+    // Create a pending enrollment record immediately so the student can see
+    // a "payment processing" state if they return to the course page.
+    const pendingPayload = {
       id: enrollmentId,
       studentId: data.studentId,
       courseId: data.courseId,
@@ -51,76 +74,107 @@ export const paymentService = {
       paymentEmail: data.email,
       paymentNetwork: data.network,
       status: 'pending_payment',
-      progress: existing?.progress ?? 0,
-      completedLessons: existing?.completedLessons ?? [],
-      enrolledAt: existing?.enrolledAt ?? serverTimestamp(),
+      progress: 0,
+      completedLessons: [],
+      enrolledAt: serverTimestamp(),
     };
 
-    // 1. Create or refresh the pending enrollment record
     try {
-      await setDoc(enrollmentRef, initialPayload, { merge: true });
+      await setDoc(enrollmentRef, pendingPayload, { merge: true });
     } catch (err: any) {
       if (err.code === 'permission-denied') {
-        errorEmitter.emit('permission-error', new FirestorePermissionError({
-          path: enrollmentRef.path,
-          operation: 'write',
-          requestResourceData: initialPayload,
-        }));
+        errorEmitter.emit(
+          'permission-error',
+          new FirestorePermissionError({
+            path: enrollmentRef.path,
+            operation: 'write',
+            requestResourceData: pendingPayload,
+          })
+        );
       }
       throw err;
     }
 
-    // 2. Simulate Payment Verification Delay (e.g., waiting for MoMo prompt).
-    // TODO: replace with the real Fapshi webhook callback before go-live.
-    await new Promise(resolve => setTimeout(resolve, 3000));
+    // Delegate to our secure server-side API route
+    const response = await fetch('/api/payments/initiate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        amount: data.amount,
+        phone: data.phone,
+        email: data.email,
+        network: data.network,
+        studentId: data.studentId,
+        courseId: data.courseId,
+        courseTitle: data.courseTitle,
+        studentName: data.studentName,
+      }),
+    });
 
-    // 3. Mark as Active & initialize tracking. Do NOT reset progress or
-    //    completedLessons — a re-enrollment should preserve prior learning state.
-    const activationPayload = {
-      status: 'active',
-      paymentReference: `FAP-${Math.random().toString(36).substring(2, 11).toUpperCase()}`,
-      activatedAt: serverTimestamp(),
-      lastAccessedAt: serverTimestamp(),
-    };
+    const result = await response.json();
 
-    try {
-      await updateDoc(enrollmentRef, activationPayload);
-      return { success: true };
-    } catch (err: any) {
-      if (err.code === 'permission-denied') {
-        errorEmitter.emit('permission-error', new FirestorePermissionError({
-          path: enrollmentRef.path,
-          operation: 'update',
-          requestResourceData: activationPayload,
-        }));
+    if (!response.ok || !result.success) {
+      // Roll back the pending enrollment record on payment initiation failure
+      try {
+        await updateDoc(enrollmentRef, {
+          status: 'failed',
+          failedAt: serverTimestamp(),
+          failureReason: result.error ?? 'Payment initiation failed',
+        });
+      } catch {
+        // Best-effort rollback
       }
-      throw err;
+      return { success: false, error: result.error ?? 'Payment initiation failed.' };
+    }
+
+    // Store the Fapshi transaction ID on the enrollment so the webhook can
+    // look up the record when the payment completes.
+    try {
+      await updateDoc(enrollmentRef, { transId: result.transId });
+    } catch {
+      // Non-fatal: webhook will still find the record via studentId+courseId
+    }
+
+    return { success: true, transId: result.transId, message: result.message };
+  },
+
+  /**
+   * Poll the payment status for a given transaction. Used to show the user
+   * a real-time status indicator while they wait for the USSD prompt.
+   */
+  async checkPaymentStatus(transId: string): Promise<{
+    status: 'SUCCESSFUL' | 'FAILED' | 'PENDING' | 'EXPIRED' | 'UNKNOWN';
+    message?: string;
+  }> {
+    try {
+      const response = await fetch(`/api/payments/status/${transId}`);
+      const result = await response.json();
+      return { status: result.status ?? 'UNKNOWN', message: result.message };
+    } catch {
+      return { status: 'UNKNOWN' };
     }
   },
 
   /**
-   * Verifies if a user has access to a course.
+   * Verify if a student has an active enrollment for a course.
    */
-  async checkEnrollmentStatus(studentId: string, courseId: string) {
+  async checkEnrollmentStatus(studentId: string, courseId: string): Promise<string | null> {
     if (!studentId || !courseId) return null;
-    
+
     const enrollmentId = `${studentId}_${courseId}`;
     const docRef = doc(firestore, 'enrollments', enrollmentId);
-    
+
     try {
       const snap = await getDoc(docRef);
-      if (snap.exists()) {
-        return snap.data().status as string;
-      }
-      return null;
+      return snap.exists() ? (snap.data().status as string) : null;
     } catch (err: any) {
       if (err.code === 'permission-denied') {
-        errorEmitter.emit('permission-error', new FirestorePermissionError({
-          path: docRef.path,
-          operation: 'get',
-        }));
+        errorEmitter.emit(
+          'permission-error',
+          new FirestorePermissionError({ path: docRef.path, operation: 'get' })
+        );
       }
       return null;
     }
-  }
+  },
 };
