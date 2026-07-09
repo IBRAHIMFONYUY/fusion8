@@ -1,6 +1,6 @@
 'use client';
 
-import { Header } from '@/components/header';
+import { PublicHeader } from '@/components/public-header';
 import { Footer } from '@/components/footer';
 import { Button } from '@/components/ui/button';
 import { IMAGES } from '@/lib/images';
@@ -85,7 +85,7 @@ export default function HomePage() {
 
   return (
     <div className="flex flex-col min-h-screen bg-background">
-      <Header />
+      <PublicHeader />
 
       {/* ═══════════════ HERO ═══════════════ */}
       <section className="relative pt-32 pb-20 border-b border-black/[0.06] overflow-hidden">
@@ -197,7 +197,7 @@ export default function HomePage() {
         <div className="absolute inset-0 flex items-center px-8 md:px-16">
           <div>
             <p className="section-label">The Fusion 8 Pipeline</p>
-            <p className="font-black text-white text-xl md:text-3xl max-w-md leading-tight" style={{ letterSpacing: '-0.02em' }}>
+            <p className="font-black text-white text-xl md:text-3xl " style={{ letterSpacing: '-0.02em' }}>
               TALENT → BUILDERS → PROTOTYPES → PRODUCTS → INDUSTRIES
             </p>
           </div>
@@ -233,7 +233,7 @@ export default function HomePage() {
                   </div>
                   <div className="p-6 flex-1 flex flex-col">
                     <h3 className="text-base font-black text-foreground mb-2 group-hover:text-accent transition-colors">{course.title}</h3>
-                    <p className="text-xs leading-relaxed mb-6 flex-1" style={{ color: 'rgba(100,116,139,0.80)' }}>{course.desc}</p>
+                    <p className="text-xs leading-relaxed mb-6 flex-1" style={{ color: 'rgba(109, 122, 141, 0.8)' }}>{course.desc}</p>
                     <div className="flex items-center justify-between pt-4 border-t border-black/[0.06]">
                       <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
                         <Clock className="h-3.5 w-3.5" />{course.duration}

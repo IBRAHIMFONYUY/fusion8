@@ -80,18 +80,37 @@ export default function AdminUsersPage() {
             return;
         }
 
-        const headers = ['Full Name', 'Email', 'Phone', 'Age & Location', 'Current Skills', 'Expectations', 'Applied At'];
-        
+        const headers = [
+            'Full Name', 'Email', 'WhatsApp', 'Age', 'Gender', 'City', 'Education Level',
+            'Occupation', 'Current Skills', 'Hardware Experience', 'How Heard',
+            'Project Idea', 'Expectations', 'Biggest Challenge',
+            'Has Device', 'Can Commit', 'Emergency Contact', 'Emergency Phone',
+            'Payment Ref', 'Applied At',
+        ];
+
         const csvData = cohortApps.map(app => {
             const date = app.appliedAt?.toDate ? app.appliedAt.toDate().toLocaleDateString() : '';
             return [
                 app.fullName || '',
                 app.email || '',
                 app.phone || '',
-                app.ageLocation || '',
+                app.age || '',
+                app.gender || '',
+                app.location || app.ageLocation || '',
+                app.educationLevel || '',
+                app.occupation || '',
                 app.currentSkills || '',
+                app.previousHardware || '',
+                app.howHeard || '',
+                app.projectIdea || '',
                 app.expectations || '',
-                date
+                app.biggestChallenge || '',
+                app.hasDevice ? 'Yes' : 'No',
+                app.canCommit ? 'Yes' : 'No',
+                app.emergencyName || '',
+                app.emergencyPhone || '',
+                app.paymentRef || '',
+                date,
             ];
         });
 
@@ -334,29 +353,45 @@ export default function AdminUsersPage() {
                                                             <DialogTitle className="font-headline text-2xl uppercase tracking-tighter text-accent">Sponsor Audit Profile</DialogTitle>
                                                             <DialogDescription>Extracted cohort application for {user.displayName}.</DialogDescription>
                                                         </DialogHeader>
-                                                        <div className="grid gap-4 py-4 mt-2 border-t">
-                                                            <div className="grid grid-cols-2 gap-4">
-                                                                 <div>
-                                                                    <p className="text-xs font-bold uppercase text-muted-foreground tracking-widest mb-1">Applied On</p>
-                                                                    <p className="font-bold">{appData.appliedAt?.toDate ? appData.appliedAt.toDate().toLocaleDateString() : 'Unknown'}</p>
-                                                                 </div>
-                                                                 <div>
-                                                                    <p className="text-xs font-bold uppercase text-muted-foreground tracking-widest mb-1">Contact Phone</p>
-                                                                    <p className="font-bold">{appData.phone || 'N/A'}</p>
-                                                                 </div>
-                                                                 <div>
-                                                                    <p className="text-xs font-bold uppercase text-muted-foreground tracking-widest mb-1">Age & Region</p>
-                                                                    <p className="font-bold">{appData.ageLocation || 'N/A'}</p>
-                                                                 </div>
+                                                        <div className="grid gap-3 py-4 mt-2 border-t overflow-y-auto max-h-[60vh]">
+                                                            <div className="grid grid-cols-2 gap-3 text-sm">
+                                                                <div><p className="text-[10px] font-bold uppercase text-muted-foreground tracking-widest mb-0.5">Applied On</p><p className="font-bold">{appData.appliedAt?.toDate ? appData.appliedAt.toDate().toLocaleDateString() : 'Unknown'}</p></div>
+                                                                <div><p className="text-[10px] font-bold uppercase text-muted-foreground tracking-widest mb-0.5">WhatsApp</p><p className="font-bold">{appData.phone || 'N/A'}</p></div>
+                                                                <div><p className="text-[10px] font-bold uppercase text-muted-foreground tracking-widest mb-0.5">Age</p><p className="font-bold">{appData.age || 'N/A'}</p></div>
+                                                                <div><p className="text-[10px] font-bold uppercase text-muted-foreground tracking-widest mb-0.5">Gender</p><p className="font-bold">{appData.gender || 'N/A'}</p></div>
+                                                                <div><p className="text-[10px] font-bold uppercase text-muted-foreground tracking-widest mb-0.5">Location</p><p className="font-bold">{appData.location || appData.ageLocation || 'N/A'}</p></div>
+                                                                <div><p className="text-[10px] font-bold uppercase text-muted-foreground tracking-widest mb-0.5">Education</p><p className="font-bold">{appData.educationLevel || 'N/A'}</p></div>
+                                                                <div><p className="text-[10px] font-bold uppercase text-muted-foreground tracking-widest mb-0.5">Occupation</p><p className="font-bold">{appData.occupation || 'N/A'}</p></div>
+                                                                <div><p className="text-[10px] font-bold uppercase text-muted-foreground tracking-widest mb-0.5">How Heard</p><p className="font-bold">{appData.howHeard || 'N/A'}</p></div>
+                                                                <div><p className="text-[10px] font-bold uppercase text-muted-foreground tracking-widest mb-0.5">Has Device</p><p className="font-bold">{appData.hasDevice ? '✅ Yes' : '❌ No'}</p></div>
+                                                                <div><p className="text-[10px] font-bold uppercase text-muted-foreground tracking-widest mb-0.5">Can Commit</p><p className="font-bold">{appData.canCommit ? '✅ Yes' : '❌ No'}</p></div>
+                                                                <div className="col-span-2"><p className="text-[10px] font-bold uppercase text-muted-foreground tracking-widest mb-0.5">Emergency Contact</p><p className="font-bold">{appData.emergencyName || 'N/A'} · {appData.emergencyPhone || ''}</p></div>
+                                                                {appData.paymentRef && <div className="col-span-2"><p className="text-[10px] font-bold uppercase text-muted-foreground tracking-widest mb-0.5">Payment Ref</p><p className="font-bold font-mono text-xs">{appData.paymentRef}</p></div>}
                                                             </div>
-                                                            <div className="mt-4 bg-secondary p-4 rounded-xl">
+                                                            <div className="bg-secondary p-4 rounded-xl">
                                                                 <p className="text-xs font-bold uppercase text-accent tracking-widest mb-2 flex items-center gap-2"><Check className="h-4 w-4"/> Current Skillset</p>
                                                                 <p className="text-sm font-medium">{appData.currentSkills || 'N/A'}</p>
                                                             </div>
+                                                            {appData.previousHardware && (
                                                             <div className="bg-secondary p-4 rounded-xl">
-                                                                <p className="text-xs font-bold uppercase text-accent tracking-widest mb-2 flex items-center gap-2"><Check className="h-4 w-4"/> Output Expectations</p>
+                                                                <p className="text-xs font-bold uppercase text-accent tracking-widest mb-2 flex items-center gap-2"><Check className="h-4 w-4"/> Hardware Experience</p>
+                                                                <p className="text-sm font-medium">{appData.previousHardware}</p>
+                                                            </div>
+                                                            )}
+                                                            <div className="bg-secondary p-4 rounded-xl">
+                                                                <p className="text-xs font-bold uppercase text-accent tracking-widest mb-2 flex items-center gap-2"><Check className="h-4 w-4"/> Project Idea</p>
+                                                                <p className="text-sm font-medium">{appData.projectIdea || 'N/A'}</p>
+                                                            </div>
+                                                            <div className="bg-secondary p-4 rounded-xl">
+                                                                <p className="text-xs font-bold uppercase text-accent tracking-widest mb-2 flex items-center gap-2"><Check className="h-4 w-4"/> Expectations</p>
                                                                 <p className="text-sm font-medium">{appData.expectations || 'N/A'}</p>
                                                             </div>
+                                                            {appData.biggestChallenge && (
+                                                            <div className="bg-secondary p-4 rounded-xl">
+                                                                <p className="text-xs font-bold uppercase text-accent tracking-widest mb-2 flex items-center gap-2"><Check className="h-4 w-4"/> Biggest Challenge</p>
+                                                                <p className="text-sm font-medium">{appData.biggestChallenge}</p>
+                                                            </div>
+                                                            )}
                                                         </div>
                                                     </DialogContent>
                                                 </Dialog>
@@ -520,8 +555,10 @@ export default function AdminUsersPage() {
                                     <div className="text-xs text-muted-foreground">{app.phone}</div>
                                 </TableCell>
                                 <TableCell className="align-top pt-4 min-w-[300px]">
-                                    <p className="font-medium text-sm mb-1 line-clamp-2">Topic: {app.subjects}</p>
-                                    <p className="text-xs text-muted-foreground line-clamp-3 italic">"{app.experience}"</p>
+                                    <p className="font-medium text-sm mb-1 line-clamp-2">Topics: {app.subjects || app.proposedTopics}</p>
+                                    {app.city && <p className="text-xs text-muted-foreground">{app.city} · {app.yearsExperience}</p>}
+                                    <p className="text-xs text-muted-foreground line-clamp-2 italic mt-1">"{app.motivation || app.experience}"</p>
+                                    {app.linkedIn && <a href={app.linkedIn} target="_blank" rel="noopener noreferrer" className="text-xs text-accent hover:underline mt-1 block">LinkedIn ↗</a>}
                                 </TableCell>
                                 <TableCell className="align-top pt-4">
                                     <Badge variant={app.status === 'pending' ? 'outline' : app.status === 'approved' ? 'default' : 'destructive'} 

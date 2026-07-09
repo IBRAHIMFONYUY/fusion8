@@ -83,7 +83,7 @@ export default function StudentAssignmentsPage() {
 
   if (isLoading || isSyncing || enrolledCourseIds === null) {
     return (
-      <div className="flex flex-col items-center justify-center p-24">
+      <div className="flex flex-col items-center justify-center p-6 sm:p-24 min-h-[60vh]">
         <Loader2 className="h-12 w-12 animate-spin text-accent mb-4" />
         <p className="text-muted-foreground animate-pulse">Syncing academic records...</p>
       </div>
@@ -112,6 +112,48 @@ export default function StudentAssignmentsPage() {
             </CardHeader>
             <CardContent className="p-0">
             {assignments && assignments.length > 0 ? (
+                <>
+                {/* Mobile card layout — shown below sm */}
+                <div className="sm:hidden divide-y divide-border">
+                    {assignments.map(assignment => {
+                    const submission = submissions[assignment.id];
+                    return (
+                        <div key={assignment.id} className="p-4 space-y-3">
+                        <div className="flex items-start justify-between gap-2">
+                            <div className="min-w-0">
+                            <p className="font-bold text-sm truncate">{assignment.title}</p>
+                            <p className="text-[10px] text-muted-foreground font-mono mt-0.5">ID: {assignment.id.slice(0,8)}</p>
+                            </div>
+                            {submission ? (
+                            <Badge className="bg-green-600 text-white border-none shrink-0 flex items-center gap-1 text-[10px]">
+                                <CheckCircle2 className="h-3 w-3" /> Submitted
+                            </Badge>
+                            ) : (
+                            <Badge variant="secondary" className="opacity-60 shrink-0 text-[10px]">Pending</Badge>
+                            )}
+                        </div>
+                        <div className="flex items-center justify-between gap-2">
+                            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                            <Clock className="h-3 w-3 shrink-0" />
+                            <span>{assignment.dueDate || 'Flexible'}</span>
+                            </div>
+                            {!submission ? (
+                            <Button onClick={() => handleSubmitClick(assignment)} size="sm" className="bg-accent hover:bg-accent/90 text-accent-foreground font-bold h-8 text-xs px-4">
+                                Submit
+                            </Button>
+                            ) : (
+                            <Button variant="ghost" size="sm" className="text-xs font-bold h-8" disabled>
+                                Under Review
+                            </Button>
+                            )}
+                        </div>
+                        </div>
+                    );
+                    })}
+                </div>
+
+                {/* Table layout — shown on sm+ with horizontal scroll fallback */}
+                <div className="hidden sm:block overflow-x-auto">
                 <Table>
                 <TableHeader>
                     <TableRow className="bg-secondary/30">
@@ -161,6 +203,8 @@ export default function StudentAssignmentsPage() {
                     })}
                 </TableBody>
                 </Table>
+                </div>
+                </>
             ) : (
                 <div className="p-12">
                     <EmptyState 

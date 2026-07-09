@@ -1,7 +1,8 @@
 import { config } from 'dotenv';
 import { resolve } from 'path';
 
-// Load .env file BEFORE importing any internal modules that require it
+// Load env files — .env.local takes precedence over .env
+config({ path: resolve(__dirname, '../.env.local') });
 config({ path: resolve(__dirname, '../.env') });
 
 import { getAuth } from 'firebase-admin/auth';

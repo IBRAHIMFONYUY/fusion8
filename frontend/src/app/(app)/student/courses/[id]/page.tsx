@@ -81,7 +81,7 @@ export default function StudentCoursePage() {
 
   if (authLoading || courseLoading || modulesLoading || lessonsLoading || enrollDocLoading || isEnrolled === null) {
     return (
-      <div className="flex flex-col items-center justify-center p-24 text-center min-h-screen">
+      <div className="flex flex-col items-center justify-center p-6 sm:p-24 text-center min-h-screen">
         <Loader2 className="h-12 w-12 animate-spin text-accent mb-4" />
         <p className="text-muted-foreground animate-pulse font-medium uppercase tracking-widest text-xs">Accessing Digital Campus...</p>
       </div>
@@ -117,7 +117,7 @@ export default function StudentCoursePage() {
         <div className="bg-primary text-primary-foreground p-8 md:p-12 rounded-3xl shadow-2xl relative overflow-hidden">
             <div className="relative z-10 max-w-3xl">
                 <Badge className="bg-accent text-accent-foreground border-none mb-4 px-3 py-1 font-bold">MY LEARNING</Badge>
-                <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight font-headline mb-4">{course.title}</h1>
+                <h1 className="text-2xl sm:text-4xl md:text-5xl font-extrabold tracking-tight font-headline mb-4">{course.title}</h1>
                 <p className="text-neutral-400 text-lg leading-relaxed mb-8">{course.description}</p>
                 <div className="flex flex-wrap gap-6 text-sm">
                     <div className="flex items-center gap-2 font-medium"><BookOpen className="h-4 w-4 text-accent" /> {modules.length} Modules</div>
@@ -125,8 +125,8 @@ export default function StudentCoursePage() {
                     <div className="flex items-center gap-2 font-medium"><Star className="h-4 w-4 text-accent" /> Verified Credentials</div>
                 </div>
                 {firstLesson ? (
-                  <Button asChild size="lg" className="mt-8 bg-accent hover:bg-accent/90 text-accent-foreground font-bold h-14 px-10 rounded-full shadow-xl transform transition-transform hover:scale-105">
-                    <Link href={`/student/learn/${course.id}?lessonId=${firstLesson.id}`}>
+                  <Button asChild size="lg" className="mt-8 bg-accent hover:bg-accent/90 text-accent-foreground font-bold h-14 px-8 sm:px-10 rounded-full shadow-xl transform transition-transform hover:scale-105">
+                    <Link href={`/student/courses/${course.id}/lesson/${firstLesson.id}`}>
                       {completedLessons.length > 0 ? 'Continue Learning' : 'Start Taking Lessons'} <ArrowRight className="ml-2 h-5 w-5" />
                     </Link>
                   </Button>
@@ -158,7 +158,7 @@ export default function StudentCoursePage() {
                                           const isDone = completedLessons.includes(lesson.id);
                                           return (
                                             <li key={lesson.id}>
-                                                <Link href={`/student/learn/${course.id}?lessonId=${lesson.id}`}>
+                                                <Link href={`/student/courses/${course.id}/lesson/${lesson.id}`}>
                                                     <div className="flex items-center justify-between px-6 py-5 hover:bg-accent/5 transition-all group">
                                                         <div className="flex items-center gap-5">
                                                             <div className="text-3xl font-black text-muted-foreground/20 group-hover:text-accent/40 transition-colors">
@@ -206,7 +206,7 @@ export default function StudentCoursePage() {
                     </CardHeader>
                     <CardContent className="space-y-6">
                         <div className="text-center py-8">
-                            <div className="inline-flex items-center justify-center h-28 w-24 rounded-full border-8 border-accent/20 text-2xl font-black text-accent">
+                            <div className="inline-flex items-center justify-center h-24 w-24 rounded-full border-8 border-accent/20 text-2xl font-black text-accent">
                                 {progress}%
                             </div>
                             <p className="text-sm font-bold mt-4 text-muted-foreground uppercase tracking-widest">

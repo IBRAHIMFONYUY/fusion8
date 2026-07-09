@@ -19,6 +19,9 @@ export type Module = {
   lessons: Lesson[];
 };
 
+export type CourseCategory = 'Automotive' | 'Drones & UAV' | 'Embedded Systems' | 'MATLAB' | 'Mechatronics' | 'SolidWorks' | 'Other';
+export type CourseLevel = 'Beginner' | 'Intermediate' | 'Advanced';
+
 export type CourseData = {
   id: string;
   title: string;
@@ -27,9 +30,11 @@ export type CourseData = {
   imageUrl: string;
   modules: Module[];
   teacherId?: string;
-  status?: 'published' | 'unpublished' | 'pending'; // Added for context
-  featured?: boolean; // Added for context
+  status?: 'published' | 'unpublished' | 'pending' | 'draft';
+  featured?: boolean;
   price?: number;
+  category?: CourseCategory;
+  level?: CourseLevel;
 };
 
 const initialCourseState: CourseData = {
@@ -40,7 +45,9 @@ const initialCourseState: CourseData = {
     imageUrl: '',
     modules: [],
     teacherId: '',
-    status: 'pending'
+    status: 'draft',
+    category: undefined,
+    level: undefined,
 }
 
 export function useCourseBuilder(initialState: Partial<CourseData> = {}) {

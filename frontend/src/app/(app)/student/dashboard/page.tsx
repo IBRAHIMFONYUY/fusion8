@@ -158,11 +158,19 @@ export default function StudentDashboardPage() {
   }, [firestore]);
   const { data: broadcasts } = useCollection(broadcastsQuery);
 
-  // Assignments
+  // Assignments — filtered to courses the student is actually enrolled in
+  const enrolledCourseIds = enrollments?.map((e: any) => e.courseId) ?? [];
   const assignmentsQuery = useMemoFirebase(() => {
-    if (!firestore) return null;
-    return query(collection(firestore, 'assignments'), limit(5));
-  }, [firestore]);
+    if (!firestore || !user || !enrolledCourseIds.length) return null;
+    // Firestore 'in' supports up to 30 values
+    const ids = enrolledCourseIds.slice(0, 30);
+    return query(
+      collection(firestore, 'assignments'),
+      where('courseId', 'in', ids),
+      orderBy('dueDate', 'asc'),
+      limit(5)
+    );
+  }, [firestore, user, enrolledCourseIds.join(',')]);
   const { data: assignments } = useCollection(assignmentsQuery);
 
   // Projects (for achievements)

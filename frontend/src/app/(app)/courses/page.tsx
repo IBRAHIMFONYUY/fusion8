@@ -17,6 +17,26 @@ import { motion } from 'framer-motion';
 const CATEGORIES = ['All', 'Automotive', 'Drones & UAV', 'Embedded Systems', 'MATLAB', 'Mechatronics', 'SolidWorks'] as const;
 const LEVELS     = ['All', 'Beginner', 'Intermediate', 'Advanced'] as const;
 
+const ALLOWED_HOSTS = [
+  'firebasestorage.googleapis.com',
+  'api.dicebear.com',
+  'lh3.googleusercontent.com',
+  'i.ytimg.com',
+  'img.youtube.com',
+  'images.unsplash.com',
+  'picsum.photos',
+];
+
+function safeThumb(url: string | undefined, fallback: string): string {
+  if (!url) return fallback;
+  try {
+    const { hostname } = new URL(url);
+    return ALLOWED_HOSTS.some(h => hostname === h || hostname.endsWith(`.${h}`)) ? url : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
 function CourseCardSkeleton() {
   return (
     <div className="rounded-3xl overflow-hidden bg-card border border-border animate-pulse">
@@ -188,7 +208,8 @@ export default function CoursesPage() {
               variants={{ show: { transition: { staggerChildren: 0.07 } } }}
             >
               {filtered.map(course => {
-                const img = course.thumbnail || PlaceHolderImages[0]?.imageUrl;
+                const fallback = PlaceHolderImages[0]?.imageUrl ?? '';
+                const img = safeThumb(course.thumbnail, fallback);
                 return (
                   <motion.div
                     key={course.id}

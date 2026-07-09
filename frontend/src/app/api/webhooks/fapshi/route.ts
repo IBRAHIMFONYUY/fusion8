@@ -163,14 +163,16 @@ export async function POST(request: NextRequest) {
         const student = studentDoc.data()!;
         const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://fusion8.tech';
 
-        // Trigger the email API route internally
+        // Trigger the email API route internally using the shared secret
         fetch(`${appUrl}/api/email/send`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            'x-internal-secret': process.env.INTERNAL_API_SECRET ?? '',
+          },
           body: JSON.stringify({
             to: student.email,
             template: 'enrollment_confirmed',
-            _internal: true,
             data: {
               name: student.displayName ?? 'Student',
               courseTitle,

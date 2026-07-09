@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { PlayCircle, CheckCircle, Lightbulb, Loader2, ArrowLeft, ArrowRight, FileText, ExternalLink, GraduationCap, BookOpen, ShieldAlert, Download } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
 import { getAiSummaryAction } from '@/lib/actions';
 import { useActionState, useMemo, startTransition, useState, useEffect } from 'react';
@@ -67,6 +68,14 @@ export default function LessonPage() {
     };
   }, [allLessons, params?.lessonId]);
 
+  // Enrollment gate — redirect unenrolled users to the course detail page
+  useEffect(() => {
+    if (enrollLoading || !user || !params?.id) return;
+    if (enrollment === null || enrollment?.status !== 'active') {
+      router.replace(`/courses/${params.id}?enroll=1`);
+    }
+  }, [enrollment, enrollLoading, user, params?.id, router]);
+
   const isCompleted = useMemo(() => {
     return enrollment?.completedLessons?.includes(params?.lessonId);
   }, [enrollment, params?.lessonId]);
@@ -98,7 +107,7 @@ export default function LessonPage() {
 
   if (courseLoading || lessonLoading || modulesLoading || lessonsLoading || enrollLoading || !courseRef || !lessonRef) {
     return (
-      <div className="flex flex-col items-center justify-center p-24 text-center min-h-screen bg-background">
+      <div className="flex flex-col items-center justify-center p-6 sm:p-24 text-center min-h-screen bg-background">
         <Loader2 className="h-12 w-12 animate-spin text-accent mb-4" />
         <p className="text-muted-foreground animate-pulse font-medium uppercase tracking-widest text-xs">Authenticating technical stream...</p>
       </div>
@@ -116,17 +125,17 @@ export default function LessonPage() {
             <span>/</span>
             <span className="text-accent">{course.title}</span>
           </div>
-          <h1 className="text-3xl font-black tracking-tighter font-headline text-primary">{lesson.title}</h1>
+          <h1 className="text-2xl sm:text-3xl font-black tracking-tighter font-headline text-primary">{lesson.title}</h1>
         </div>
-        <div className="flex items-center gap-3">
-           <Badge variant="secondary" className="h-8 px-4 font-bold bg-secondary/50 border-none">
+        <div className="flex flex-wrap items-center gap-2">
+           <Badge variant="secondary" className="h-8 px-3 sm:px-4 font-bold bg-secondary/50 border-none">
              Module {lesson.order + 1}
            </Badge>
-           <Badge variant="outline" className="h-8 px-4 font-bold border-accent/20 text-accent uppercase tracking-wider text-[10px]">
+           <Badge variant="outline" className="h-8 px-3 sm:px-4 font-bold border-accent/20 text-accent uppercase tracking-wider text-[10px]">
              {lesson.duration || "10"} MINS
            </Badge>
            {isCompleted && (
-             <Badge className="h-8 px-4 font-bold bg-green-100 text-green-700 border-none flex items-center gap-1">
+             <Badge className="h-8 px-3 sm:px-4 font-bold bg-green-100 text-green-700 border-none flex items-center gap-1">
                <CheckCircle className="h-3 w-3" /> Completed
              </Badge>
            )}
@@ -138,7 +147,70 @@ export default function LessonPage() {
           {/* THE TECHNICAL VAULT PLAYER */}
           <VideoPlayer url={lesson.youtubeVideoUrl || lesson.videoUrl} title={lesson.title} />
 
-          <div className="flex flex-wrap items-center justify-between p-6 bg-card rounded-2xl border shadow-sm gap-4">
+          {/* Mobile syllabus sheet — hidden on lg where the sidebar is visible */}
+          <div className="lg:hidden">
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button variant="outline" className="w-full h-11 font-bold border-2 rounded-xl flex items-center justify-between px-5">
+                  <span className="flex items-center gap-2">
+                    <BookOpen className="h-4 w-4 text-accent" />
+                    Course Outline
+                  </span>
+                  <span className="text-[10px] text-muted-foreground font-mono">
+                    {(allLessons?.findIndex(l => l.id === params?.lessonId) ?? 0) + 1}/{allLessons?.length ?? '?'} lessons
+                  </span>
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="bottom" className="h-[82vh] p-0 rounded-t-3xl overflow-hidden border-none">
+                <div className="bg-primary h-full flex flex-col">
+                  <div className="bg-white/5 py-4 px-6 border-b border-white/10 flex items-center gap-3 shrink-0">
+                    <BookOpen className="h-4 w-4 text-accent" />
+                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-primary-foreground/60">Syllabus Navigator</span>
+                  </div>
+                  <ScrollArea className="flex-1">
+                    <Accordion type="multiple" defaultValue={modulesList?.map(m => `item-${m.id}`)} className="w-full">
+                      {modulesList?.map((module) => (
+                        <AccordionItem value={`item-${module.id}`} key={module.id} className="border-b border-white/5">
+                          <AccordionTrigger className="px-6 py-4 font-bold text-[11px] uppercase tracking-wider text-primary-foreground/80 hover:no-underline">
+                            {module.title}
+                          </AccordionTrigger>
+                          <AccordionContent className="pb-0 bg-black/20">
+                            <ul className="space-y-0.5">
+                              {allLessons?.filter(l => l.moduleId === module.id).map(l => {
+                                const lessonIsDone = enrollment?.completedLessons?.includes(l.id);
+                                return (
+                                  <li key={l.id}>
+                                    <Link href={`/student/courses/${params.id}/lesson/${l.id}`}>
+                                      <div className={cn(
+                                        "flex items-center gap-3 px-6 py-4 text-[11px] transition-all border-l-4",
+                                        l.id === params?.lessonId
+                                          ? "bg-accent/20 border-accent text-white font-black"
+                                          : "border-transparent text-primary-foreground/40"
+                                      )}>
+                                        {lessonIsDone ? (
+                                          <CheckCircle className="h-4 w-4 shrink-0 text-green-500" />
+                                        ) : (
+                                          <PlayCircle className={cn("h-4 w-4 shrink-0", l.id === params?.lessonId ? "text-accent" : "opacity-30")} />
+                                        )}
+                                        <span className={cn("flex-1 truncate", lessonIsDone && "text-white/60")}>{l.title}</span>
+                                        {l.id === params?.lessonId && <div className="h-1.5 w-1.5 rounded-full bg-accent animate-pulse" />}
+                                      </div>
+                                    </Link>
+                                  </li>
+                                );
+                              })}
+                            </ul>
+                          </AccordionContent>
+                        </AccordionItem>
+                      ))}
+                    </Accordion>
+                  </ScrollArea>
+                </div>
+              </SheetContent>
+            </Sheet>
+          </div>
+
+          <div className="flex flex-wrap items-center justify-between p-4 sm:p-6 bg-card rounded-2xl border shadow-sm gap-4">
             <div className="flex gap-2">
               {navigation.prev ? (
                 <Button asChild variant="outline" className="font-bold border-2 rounded-xl">
@@ -220,7 +292,7 @@ export default function LessonPage() {
                   Unit Documentation
                 </h3>
                 <Card className="border-none shadow-sm rounded-3xl overflow-hidden bg-secondary/30">
-                  <CardContent className="pt-8 px-8 pb-10">
+                  <CardContent className="pt-6 px-4 sm:px-8 pb-8">
                     <div className="prose prose-neutral dark:prose-invert max-w-none whitespace-pre-wrap leading-relaxed text-base font-medium text-foreground/80">
                       {lesson.content || "Instructor notes are exclusively synchronized for the onsite cohort. Digital campus users should refer to the video stream and linked reference materials."}
                     </div>
@@ -281,7 +353,7 @@ export default function LessonPage() {
           </div>
         </div>
 
-        <div className="lg:col-span-1">
+        <div className="lg:col-span-1 hidden lg:block">
           <Card className="sticky top-24 border-none shadow-2xl overflow-hidden rounded-[2rem] bg-primary ring-1 ring-white/10">
             <CardHeader className="bg-white/5 py-6 border-b border-white/5">
               <CardTitle className="text-[10px] font-black uppercase tracking-[0.2em] text-primary-foreground/60 flex items-center gap-3">

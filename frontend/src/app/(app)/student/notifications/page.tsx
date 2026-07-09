@@ -6,7 +6,7 @@ import { Bell, Check, Loader2, Info, Rocket, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { formatDistanceToNow } from 'date-fns';
 import { useAuth, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, query, where, orderBy, doc, deleteDoc } from 'firebase/firestore';
+import { collection, query, where, orderBy, doc, deleteDoc, writeBatch } from 'firebase/firestore';
 import { EmptyState } from '@/components/empty-state';
 
 export default function StudentNotificationsPage() {
@@ -26,7 +26,18 @@ export default function StudentNotificationsPage() {
 
   const handleMarkRead = async (id: string) => {
     try {
-        await deleteDoc(doc(firestore, 'notifications', id));
+      await deleteDoc(doc(firestore, 'notifications', id));
+    } catch (e) {}
+  };
+
+  const handleClearAll = async () => {
+    if (!notifications || notifications.length === 0 || !firestore) return;
+    try {
+      const batch = writeBatch(firestore);
+      notifications.forEach(n => {
+        batch.delete(doc(firestore, 'notifications', n.id));
+      });
+      await batch.commit();
     } catch (e) {}
   };
 
@@ -55,7 +66,7 @@ export default function StudentNotificationsPage() {
                     <CardDescription>Stay updated with lab schedules and course releases.</CardDescription>
                 </div>
                 {notifications && notifications.length > 0 && (
-                    <Button variant="outline" size="sm" className="font-bold border-2 rounded-xl">Clear All</Button>
+                    <Button variant="outline" size="sm" className="font-bold border-2 rounded-xl" onClick={handleClearAll}>Clear All</Button>
                 )}
             </div>
         </CardHeader>

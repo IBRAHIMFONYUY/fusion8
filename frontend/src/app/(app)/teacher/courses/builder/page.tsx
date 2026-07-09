@@ -37,7 +37,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { useCourseBuilder } from '@/hooks/useCourseBuilder';
 import { useToast } from '@/hooks/use-toast';
 import { GripVertical, PlusCircle, Trash2, Upload, Edit, Loader2, BookOpen, ImageIcon, Send, RefreshCcw } from 'lucide-react';
-import type { Lesson, Module } from '@/hooks/useCourseBuilder';
+import type { Lesson, Module, CourseCategory, CourseLevel } from '@/hooks/useCourseBuilder';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import React, { useState, useEffect } from 'react';
 import { LessonEditDialog } from '@/components/lesson-edit-dialog';
 import { lmsService } from '@/services/lms-service';
@@ -248,6 +249,8 @@ export default function CourseBuilderPage() {
             price: data.price || 5000,
             imageUrl: data.thumbnail || '',
             status: data.status || 'draft',
+            category: data.category || undefined,
+            level: data.level || undefined,
             modules: data.modules.map((m: any) => ({
               id: m.id,
               title: m.title,
@@ -415,6 +418,37 @@ export default function CourseBuilderPage() {
                 />
               </div>
             </div>
+            <div className="grid md:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <Label>Category</Label>
+                <Select
+                  value={course.category || ''}
+                  onValueChange={(v) => updateCourseInfo('category' as any, v)}
+                >
+                  <SelectTrigger><SelectValue placeholder="Select a category" /></SelectTrigger>
+                  <SelectContent>
+                    {(['Automotive', 'Drones & UAV', 'Embedded Systems', 'MATLAB', 'Mechatronics', 'SolidWorks', 'Other'] as CourseCategory[]).map(c => (
+                      <SelectItem key={c} value={c}>{c}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Level</Label>
+                <Select
+                  value={course.level || ''}
+                  onValueChange={(v) => updateCourseInfo('level' as any, v)}
+                >
+                  <SelectTrigger><SelectValue placeholder="Select difficulty level" /></SelectTrigger>
+                  <SelectContent>
+                    {(['Beginner', 'Intermediate', 'Advanced'] as CourseLevel[]).map(l => (
+                      <SelectItem key={l} value={l}>{l}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
             <div className="space-y-2">
               <Label htmlFor="imageUrl">Course Thumbnail URL</Label>
               <div className="flex gap-2">

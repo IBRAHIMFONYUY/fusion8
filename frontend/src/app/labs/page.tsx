@@ -1,6 +1,6 @@
 'use client';
 
-import { Header } from '@/components/header';
+import { PublicHeader } from '@/components/public-header';
 import { Footer } from '@/components/footer';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
@@ -25,7 +25,7 @@ const PRICING = [
 export default function LabsPage() {
   return (
     <div className="flex flex-col min-h-screen bg-background">
-      <Header />
+      <PublicHeader />
 
       {/* Hero */}
       <section className="relative pt-32 pb-20 grid-texture border-b border-black/[0.06]">

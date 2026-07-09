@@ -1,6 +1,6 @@
 'use client';
 
-import { Header } from '@/components/header';
+import { PublicHeader } from '@/components/public-header';
 import { Footer } from '@/components/footer';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -110,7 +110,7 @@ function SubscribeContent() {
 export default function SubscribePage() {
   return (
     <div className="flex flex-col min-h-screen">
-      <Header />
+      <PublicHeader />
       <main className="flex-1 bg-secondary py-12 md:py-24">
         <Suspense fallback={null}>
           <SubscribeContent />

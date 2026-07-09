@@ -1,6 +1,5 @@
 import type { Metadata, Viewport } from 'next';
 import { Toaster } from '@/components/ui/toaster';
-import { FirebaseClientProvider } from '@/firebase/client-provider';
 import './globals.css';
 
 export const viewport: Viewport = {
@@ -81,10 +80,8 @@ export default function RootLayout({
       className=""
     >
       <body className="min-h-screen bg-background text-foreground antialiased font-body">
-        <FirebaseClientProvider>
-          {children}
-          <Toaster />
-        </FirebaseClientProvider>
+        {children}
+        <Toaster />
       </body>
     </html>
   );

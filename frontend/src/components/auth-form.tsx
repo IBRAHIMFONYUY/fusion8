@@ -1,11 +1,14 @@
 "use client";
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { signInUser, signUpUser, signInWithGoogle, adminResetUserPassword, UserRole } from '@/lib/auth';
+import { sendEmailVerification } from 'firebase/auth';
+import { auth } from '@/firebase';
+import { signInUser, signUpUser, signInWithGoogle, UserRole } from '@/lib/auth';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -13,7 +16,7 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Rocket, Loader2, Info, GraduationCap, User } from 'lucide-react';
+import { Rocket, Loader2, Info, GraduationCap, User, MailCheck } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Separator } from '@/components/ui/separator';
@@ -36,6 +39,8 @@ export function AuthForm() {
   const [isPending, setIsPending] = useState(false);
   const [activeTab, setActiveTab] = useState<'login' | 'register'>('login');
   const [errorHint, setErrorHint] = useState<string | null>(null);
+  const [showResendVerification, setShowResendVerification] = useState(false);
+  const [resendEmail, setResendEmail] = useState('');
 
   const form = useForm<AuthValues>({
     resolver: zodResolver(authSchema),
@@ -79,21 +84,31 @@ export function AuthForm() {
     }
   };
 
-  const handleForgotPassword = async (e: React.MouseEvent) => {
-    e.preventDefault();
-    const currentEmail = form.getValues('email');
-    if (!currentEmail || !/^\S+@\S+\.\S+$/.test(currentEmail)) {
-      toast({ variant: 'destructive', title: 'Email required', description: 'Please enter a valid email address first to reset your password.' });
-      return;
-    }
+  const handleResendVerification = async () => {
     setIsPending(true);
-    const result = await adminResetUserPassword(currentEmail);
-    if (result.success) {
-      toast({ title: 'Reset Link Sent', description: 'Check your email for password reset instructions.' });
-    } else {
-      toast({ variant: 'destructive', title: 'Reset Failed', description: (result as any).error });
+    try {
+      // Try to sign in temporarily to get the user object, then send verification
+      const email = resendEmail || form.getValues('email');
+      const password = form.getValues('password');
+      if (!email) {
+        toast({ variant: 'destructive', title: 'Email required', description: 'Enter your email and password above, then click resend.' });
+        setIsPending(false);
+        return;
+      }
+      // Use Firebase directly to resend — if the user is already signed in
+      const currentUser = auth.currentUser;
+      if (currentUser) {
+        await sendEmailVerification(currentUser);
+        toast({ title: 'Verification Sent', description: 'Check your inbox (and spam folder) for the new verification link.' });
+      } else {
+        toast({ title: 'Enter your password too', description: 'Fill in both email and password then try signing in again — the verification prompt will include a resend option.' });
+      }
+    } catch {
+      toast({ variant: 'destructive', title: 'Could not resend', description: 'Please try again in a few minutes.' });
+    } finally {
+      setIsPending(false);
+      setShowResendVerification(false);
     }
-    setIsPending(false);
   };
 
   const onSubmit = async (values: AuthValues) => {
@@ -122,7 +137,13 @@ export function AuthForm() {
           toast({ title: "Identity Verified", description: `Welcome back, ${result.role}.` });
           router.push(returnTo || `/${result.role}/dashboard`);
         } else {
-          toast({ variant: "destructive", title: "Login failed", description: (result as any).error });
+          const errMsg = (result as any).error as string;
+          // Detect email-not-verified error and offer resend
+          if (errMsg?.includes('verify your email')) {
+            setResendEmail(values.email);
+            setShowResendVerification(true);
+          }
+          toast({ variant: "destructive", title: "Login failed", description: errMsg });
           setIsPending(false);
         }
       }
@@ -147,6 +168,22 @@ export function AuthForm() {
         </CardDescription>
       </CardHeader>
       <CardContent>
+        {showResendVerification && (
+          <Alert className="mb-4 bg-blue-500/10 border-blue-500/20">
+            <MailCheck className="h-4 w-4 text-blue-500" />
+            <AlertDescription className="text-xs font-medium text-blue-600 dark:text-blue-400 flex items-center justify-between gap-2 flex-wrap">
+              <span>Email not verified. Didn't receive it?</span>
+              <button
+                type="button"
+                onClick={handleResendVerification}
+                disabled={isPending}
+                className="font-bold underline underline-offset-2 whitespace-nowrap"
+              >
+                Resend verification
+              </button>
+            </AlertDescription>
+          </Alert>
+        )}
         {errorHint && (
           <Alert className="mb-6 bg-accent/10 border-accent/20 text-accent">
             <Info className="h-4 w-4" />
@@ -213,14 +250,12 @@ export function AuthForm() {
                     <FormItem>
                       <div className="flex items-center justify-between">
                         <FormLabel>Access Password</FormLabel>
-                        <button
-                          type="button"
-                          onClick={handleForgotPassword}
-                          disabled={isPending}
+                        <Link
+                          href="/forgot-password"
                           className="text-xs font-medium text-muted-foreground hover:text-accent transition-colors"
                         >
                           Forgot password?
-                        </button>
+                        </Link>
                       </div>
                       <FormControl>
                         <Input type="password" placeholder="••••••••" {...field} className="h-11" disabled={isPending} />

@@ -13,6 +13,7 @@ const SYSTEM_ONLY_TEMPLATES: EmailTemplate[] = [
   'teacher_approved',
   'teacher_rejected',
   'password_reset',
+  'enrollment_confirmed',
 ];
 
 function isValidInternalRequest(request: NextRequest): boolean {

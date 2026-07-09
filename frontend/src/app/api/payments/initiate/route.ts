@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifySession } from '@/lib/auth-actions';
+import { adminDb } from '@/firebase/admin';
 
 const FAPSHI_BASE_URL =
   process.env.NODE_ENV === 'production'
@@ -57,9 +58,20 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  // Input validation
+  // Validate amount against the authoritative course price in Firestore
+  const courseDoc = await adminDb.collection('courses').doc(courseId).get();
+  if (!courseDoc.exists) {
+    return NextResponse.json({ error: 'Course not found.' }, { status: 404 });
+  }
+  const coursePrice: number = courseDoc.data()?.price ?? 0;
   if (!amount || amount < 100) {
     return NextResponse.json({ error: 'Invalid payment amount.' }, { status: 400 });
+  }
+  if (coursePrice > 0 && amount !== coursePrice) {
+    return NextResponse.json(
+      { error: `Payment amount must match the course price (${coursePrice} XAF).` },
+      { status: 400 }
+    );
   }
   if (!phone || !/^6[5-9]\d{7}$/.test(phone.replace(/\s/g, ''))) {
     return NextResponse.json(

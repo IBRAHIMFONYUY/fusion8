@@ -1,6 +1,6 @@
 'use client';
 
-import { Header } from '@/components/header';
+import { PublicHeader } from '@/components/public-header';
 import { Footer } from '@/components/footer';
 import { Button } from '@/components/ui/button';
 import { IMAGES } from '@/lib/images';
@@ -41,7 +41,7 @@ const REVENUE_STREAMS = [
 export default function AcceleratorPage() {
   return (
     <div className="flex flex-col min-h-screen bg-background">
-      <Header />
+      <PublicHeader />
 
       {/* Hero */}
       <section className="relative pt-32 pb-20 border-b border-black/[0.06] overflow-hidden">

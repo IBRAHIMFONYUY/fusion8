@@ -70,7 +70,7 @@ export default function StudentCoursesPage() {
 
     if (authLoading || loading) {
         return (
-            <div className="flex items-center justify-center p-24">
+            <div className="flex items-center justify-center p-6 sm:p-24 min-h-[40vh]">
                 <Loader2 className="h-12 w-12 animate-spin text-accent" />
             </div>
         );

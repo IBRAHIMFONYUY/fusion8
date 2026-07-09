@@ -170,6 +170,8 @@ export const lmsService = {
       thumbnail: courseData.thumbnail || courseData.imageUrl || '',
       updatedAt: serverTimestamp(),
     };
+    if (courseData.category) coursePayload.category = courseData.category;
+    if (courseData.level)    coursePayload.level    = courseData.level;
 
     if (isNew) {
       coursePayload.createdAt = serverTimestamp();

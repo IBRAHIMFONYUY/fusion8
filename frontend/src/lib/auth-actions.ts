@@ -86,6 +86,18 @@ export async function adminCreateUser(params: {
   displayName: string;
   role: 'student' | 'teacher' | 'admin';
 }): Promise<{ success: boolean; uid?: string; error?: string }> {
+  // Guard: only admins may create accounts via this action
+  const session = await verifySession();
+  if (!session) {
+    return { success: false, error: 'Unauthorized.' };
+  }
+
+  // Verify the caller is an admin in Firestore before allowing role:'admin' creation
+  const callerAdmin = await adminDb.collection('roles_admin').doc(session.uid).get();
+  if (!callerAdmin.exists) {
+    return { success: false, error: 'Admin privileges required.' };
+  }
+
   try {
     const { email, password, displayName, role } = params;
     const normalizedEmail = email.toLowerCase().trim();

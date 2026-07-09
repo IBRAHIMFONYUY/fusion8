@@ -118,7 +118,7 @@ export default function CourseDetailPage() {
             <AlertDescription>{error || "Course not found."}</AlertDescription>
             <div className="flex flex-col gap-2 mt-4">
               {needsSignIn && (
-                <Button className="w-full bg-accent hover:bg-accent/90" onClick={() => router.push(`/login?returnTo=/courses/${courseId}`)}>
+                <Button className="w-full bg-accent hover:bg-accent/90" onClick={() => router.push(`/login?redirect=${encodeURIComponent(`/courses/${courseId}`)}`)}>
                   <LogIn className="mr-2 h-4 w-4" /> Sign In to Continue
                 </Button>
               )}
@@ -136,7 +136,7 @@ export default function CourseDetailPage() {
   const handleEnrollClick = () => {
     if (!user) {
       // User must authenticate first — bounce through /login and return here.
-      router.push(`/login?returnTo=/courses/${courseId}`);
+      router.push(`/login?redirect=${encodeURIComponent(`/courses/${courseId}`)}`);
       return;
     }
 
@@ -156,8 +156,8 @@ export default function CourseDetailPage() {
       <main className="flex-1 bg-secondary">
         <div className="container mx-auto px-4 py-8 md:py-16">
           <div className="grid lg:grid-cols-3 gap-8 md:gap-12">
-            <div className="lg:col-span-2">
-              <h1 className="text-3xl md:text-5xl font-extrabold tracking-tight mb-4">{course.title}</h1>
+            <div className="lg:col-span-2 order-last lg:order-first">
+              <h1 className="text-2xl md:text-5xl font-extrabold tracking-tight mb-4">{course.title}</h1>
               <p className="text-lg text-muted-foreground mb-6">{course.description}</p>
               
               <Card className="mb-8">
@@ -203,7 +203,7 @@ export default function CourseDetailPage() {
               </div>
             </div>
 
-            <div className="lg:col-span-1">
+            <div className="lg:col-span-1 order-first lg:order-last">
               <Card className="sticky top-24 shadow-xl overflow-hidden border-none">
                  <div className="relative aspect-video">
                     <img
