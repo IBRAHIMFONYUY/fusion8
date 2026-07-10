@@ -14,7 +14,7 @@ import {
   ChevronLeft, Loader2, User, GraduationCap, Heart, Zap,
 } from 'lucide-react';
 import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
-import { firestore, useAuth } from '@/firebase';
+import { firestore } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
 
 const STEPS = [
@@ -107,7 +107,6 @@ const EMPTY: FormData = {
 };
 
 export default function ApplyPage() {
-  const { user } = useAuth();
   const { toast } = useToast();
   const [step, setStep] = useState(1); // 1-4 = form steps, 5 = success
   const [form, setForm] = useState<FormData>(EMPTY);
@@ -153,7 +152,7 @@ export default function ApplyPage() {
         emergencyPhone: form.emergencyPhone.trim(),
         paymentRef: form.paymentRef.trim(),
         // Meta
-        studentId: user?.uid ?? null,
+        studentId: null,
         status: 'pending',
         appliedAt: serverTimestamp(),
       });

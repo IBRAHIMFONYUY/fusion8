@@ -15,7 +15,8 @@ export type EmailTemplate =
   | 'assignment_graded'
   | 'certificate_issued'
   | 'password_reset'
-  | 'welcome';
+  | 'welcome'
+  | 'live_session_reminder';
 
 export interface EmailPayload {
   to: string;
@@ -49,6 +50,8 @@ function buildSubject(template: EmailTemplate, data: Record<string, any>): strin
       return `Your Fusion8 Certificate is Ready — ${data.courseTitle}`;
     case 'password_reset':
       return 'Reset your Fusion8 password';
+    case 'live_session_reminder':
+      return `Live Session Alert: "${data.title}" — ${data.date}`;
     default:
       return 'Notification from Fusion8';
   }
@@ -180,6 +183,34 @@ function buildHtmlBody(template: EmailTemplate, data: Record<string, any>): stri
           ${data.feedback ? `<strong style="display: block; margin-top: 12px;">Feedback:</strong> ${data.feedback}` : ''}
         </div>
         ${btn('View Submission', `https://fusion8.tech/student/assignments`)}
+      `);
+
+    case 'live_session_reminder':
+      return wrap(`
+        ${badge('Live Session')}
+        <br/><br/>
+        ${h1(`"${data.title}" — You're Invited!`)}
+        ${p(`Hi ${data.name},`)}
+        ${p(`Your instructor has scheduled a live session for your course. Don't miss it!`)}
+        <div style="background: #0A0A0A; border-radius: 10px; padding: 24px 28px; margin: 20px 0;">
+          <table style="width:100%; border-collapse: collapse;">
+            <tr>
+              <td style="color: #6B7280; font-size: 11px; letter-spacing: 1px; font-weight: 700; padding-bottom: 4px;">SESSION</td>
+              <td style="color: white; font-size: 15px; font-weight: 700;">${data.title}</td>
+            </tr>
+            <tr>
+              <td style="color: #6B7280; font-size: 11px; letter-spacing: 1px; font-weight: 700; padding-top: 12px; padding-bottom: 4px;">DATE</td>
+              <td style="color: white; font-size: 14px; padding-top: 12px;">${data.date}</td>
+            </tr>
+            <tr>
+              <td style="color: #6B7280; font-size: 11px; letter-spacing: 1px; font-weight: 700; padding-top: 12px; padding-bottom: 4px;">TIME</td>
+              <td style="color: ${accentColor}; font-size: 14px; font-weight: 700; padding-top: 12px;">${data.time}</td>
+            </tr>
+          </table>
+        </div>
+        ${data.meetLink ? btn('Join on Google Meet', String(data.meetLink)) : btn('View My Schedule', 'https://fusion8.tech/student/live')}
+        <br/><br/>
+        ${p('<small style="color: #9CA3AF;">If you can\'t attend live, check your course library for the recorded session afterwards.</small>')}
       `);
 
     default:

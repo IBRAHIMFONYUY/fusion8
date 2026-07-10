@@ -14,6 +14,7 @@ const SYSTEM_ONLY_TEMPLATES: EmailTemplate[] = [
   'teacher_rejected',
   'password_reset',
   'enrollment_confirmed',
+  'live_session_reminder',
 ];
 
 function isValidInternalRequest(request: NextRequest): boolean {
