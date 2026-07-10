@@ -1,9 +1,9 @@
 'use client';
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Calendar, Video, Users as UsersIcon, Loader2, PlayCircle } from 'lucide-react';
+import { Calendar, Video, Users as UsersIcon, Loader2, PlayCircle, ExternalLink } from 'lucide-react';
 import { format } from 'date-fns';
 import { EmptyState } from '@/components/empty-state';
 import { useAuth, useCollection, useMemoFirebase } from '@/firebase';
@@ -32,7 +32,7 @@ export default function StudentLivePage() {
     <div className="space-y-8">
       <div>
         <h1 className="text-3xl font-black font-headline tracking-tighter uppercase">Live Engineering Labs</h1>
-        <p className="text-muted-foreground">Join upcoming onsite lab broadcasts and interactive Q&A sessions.</p>
+        <p className="text-muted-foreground">Join upcoming live sessions and interactive Q&A broadcasts.</p>
       </div>
 
       <div className="grid md:grid-cols-3 gap-8">
@@ -43,37 +43,58 @@ export default function StudentLivePage() {
             </h2>
             {broadcasts && broadcasts.length > 0 ? (
                 <div className="grid gap-4">
-                    {broadcasts.map(b => (
-                        <Card key={b.id} className="border-none shadow-lg overflow-hidden group hover:ring-2 ring-accent/50 transition-all">
-                            <CardContent className="p-6 flex flex-col sm:flex-row justify-between items-center gap-6">
-                                <div className="flex items-start gap-4">
-                                    <div className="h-14 w-14 rounded-2xl bg-accent/10 flex items-center justify-center shrink-0">
-                                        <Calendar className="h-6 w-6 text-accent" />
-                                    </div>
-                                    <div>
-                                        <h3 className="text-lg font-black leading-tight">{b.title}</h3>
-                                        <p className="text-xs text-muted-foreground font-mono uppercase mt-1">
-                                            {format(new Date(b.date), 'EEEE, MMMM do')} • {b.time}
-                                        </p>
-                                        <div className="flex items-center gap-2 mt-3">
-                                            <Badge variant="secondary" className="text-[10px] uppercase font-bold tracking-widest">Bamenda Lab 01</Badge>
-                                            <span className="text-[10px] text-muted-foreground font-bold uppercase italic">Presented by {b.teacherName}</span>
+                    {broadcasts.map(b => {
+                        const hasMeetLink = !!b.meetLink;
+                        return (
+                            <Card key={b.id} className="border-none shadow-lg overflow-hidden group hover:ring-2 ring-accent/50 transition-all">
+                                <CardContent className="p-6 flex flex-col sm:flex-row justify-between items-center gap-6">
+                                    <div className="flex items-start gap-4 flex-1 min-w-0">
+                                        <div className="h-14 w-14 rounded-2xl bg-accent/10 flex items-center justify-center shrink-0">
+                                            <Calendar className="h-6 w-6 text-accent" />
+                                        </div>
+                                        <div className="min-w-0">
+                                            <h3 className="text-lg font-black leading-tight">{b.title}</h3>
+                                            <p className="text-xs text-muted-foreground font-mono uppercase mt-1">
+                                                {format(new Date(b.date), 'EEEE, MMMM do')} • {b.time}
+                                            </p>
+                                            <div className="flex items-center gap-2 mt-3 flex-wrap">
+                                                {hasMeetLink ? (
+                                                    <Badge className="bg-green-600 text-white border-none text-[10px] uppercase font-bold tracking-widest flex items-center gap-1">
+                                                        <Video className="h-3 w-3" /> Google Meet
+                                                    </Badge>
+                                                ) : (
+                                                    <Badge variant="secondary" className="text-[10px] uppercase font-bold tracking-widest">In-Studio</Badge>
+                                                )}
+                                                <span className="text-[10px] text-muted-foreground font-bold uppercase italic">by {b.teacherName}</span>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                                <Button className="w-full sm:w-auto bg-accent hover:bg-accent/90 text-accent-foreground font-black px-8 h-12 rounded-xl shadow-lg">
-                                    <PlayCircle className="mr-2 h-5 w-5" />
-                                    Enter Broadcast
-                                </Button>
-                            </CardContent>
-                        </Card>
-                    ))}
+                                    {hasMeetLink ? (
+                                        <a href={b.meetLink} target="_blank" rel="noopener noreferrer"
+                                            className="w-full sm:w-auto">
+                                            <Button className="w-full sm:w-auto bg-accent hover:bg-accent/90 text-accent-foreground font-black px-8 h-12 rounded-xl shadow-lg">
+                                                <Video className="mr-2 h-5 w-5" />
+                                                Join on Google Meet
+                                                <ExternalLink className="ml-2 h-4 w-4" />
+                                            </Button>
+                                        </a>
+                                    ) : (
+                                        <Button className="w-full sm:w-auto bg-accent hover:bg-accent/90 text-accent-foreground font-black px-8 h-12 rounded-xl shadow-lg"
+                                            onClick={() => {}}>
+                                            <PlayCircle className="mr-2 h-5 w-5" />
+                                            Enter Broadcast
+                                        </Button>
+                                    )}
+                                </CardContent>
+                            </Card>
+                        );
+                    })}
                 </div>
             ) : (
-                <EmptyState 
+                <EmptyState
                     icon={Video}
                     title="Broadcast Schedule Empty"
-                    description="No live broadcasts are currently scheduled. Recorded sessions are available in your course library."
+                    description="No live sessions are currently scheduled. Recorded sessions are available in your course library."
                 />
             )}
         </div>
@@ -81,18 +102,25 @@ export default function StudentLivePage() {
         <div className="space-y-6">
             <h2 className="text-xl font-bold flex items-center gap-2">
                 <UsersIcon className="h-5 w-5 text-primary" />
-                Mentorship
+                Quick Guide
             </h2>
             <Card className="border-none shadow-xl bg-secondary/30 rounded-3xl">
                 <CardHeader>
-                    <CardTitle className="text-sm font-black uppercase tracking-widest text-muted-foreground">Office Hours</CardTitle>
+                    <CardTitle className="text-sm font-black uppercase tracking-widest text-muted-foreground">How Live Sessions Work</CardTitle>
                 </CardHeader>
-                <CardContent>
-                    <EmptyState 
-                        icon={UsersIcon}
-                        title="No Mentors Online"
-                        description="Live mentorship slots are updated weekly on Mondays."
-                    />
+                <CardContent className="space-y-4 text-sm text-muted-foreground">
+                    <div className="flex gap-3">
+                        <div className="h-6 w-6 rounded-full bg-accent/10 text-accent font-bold text-xs flex items-center justify-center shrink-0">1</div>
+                        <p>Your teacher schedules a live session and you receive an <strong className="text-foreground">email alert</strong> with the link.</p>
+                    </div>
+                    <div className="flex gap-3">
+                        <div className="h-6 w-6 rounded-full bg-accent/10 text-accent font-bold text-xs flex items-center justify-center shrink-0">2</div>
+                        <p>Sessions hosted on <strong className="text-foreground">Google Meet</strong> — you join directly from this page.</p>
+                    </div>
+                    <div className="flex gap-3">
+                        <div className="h-6 w-6 rounded-full bg-accent/10 text-accent font-bold text-xs flex items-center justify-center shrink-0">3</div>
+                        <p>Can't attend live? Recordings are uploaded to your <strong className="text-foreground">course library</strong> afterwards.</p>
+                    </div>
                 </CardContent>
             </Card>
         </div>

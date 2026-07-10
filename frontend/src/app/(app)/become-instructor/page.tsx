@@ -378,13 +378,13 @@ export default function BecomeInstructorPage() {
                     <div className="space-y-2">
                       <Label htmlFor="proposedTopics">What topics or courses do you want to build on Fusion8? <span className="text-accent">*</span></Label>
                       <p className="text-xs text-muted-foreground">Be specific. Name the course(s) you have in mind and the target skill level.</p>
-                      <Textarea id="proposedTopics" rows={3} placeholder="e.g. &#10;1. Intro to Arduino for Beginners (8 lessons, beginner)&#10;2. ESP32 IoT with Firebase (10 lessons, intermediate)&#10;3. Building a Line-Following Robot (6 lessons, beginner)" value={form.proposedTopics} onChange={e => set('proposedTopics', e.target.value)} className="resize-none" />
+                      <Textarea id="proposedTopics" rows={3} placeholder={"e.g.\n1. Intro to Arduino for Beginners (8 lessons, beginner)\n2. ESP32 IoT with Firebase (10 lessons, intermediate)\n3. Building a Line-Following Robot (6 lessons, beginner)"} value={form.proposedTopics} onChange={e => set('proposedTopics', e.target.value)} className="resize-none" />
                     </div>
 
                     <div className="space-y-2">
                       <Label htmlFor="courseOutline">Briefly outline your first course (optional)</Label>
                       <p className="text-xs text-muted-foreground">Module names, topics covered, estimated video length, practical projects included.</p>
-                      <Textarea id="courseOutline" rows={4} placeholder="e.g. Module 1: What is Arduino? (20 min video + quiz)&#10;Module 2: Blink LED (15 min + hands-on)&#10;Module 3: Buttons and Inputs..." value={form.courseOutline} onChange={e => set('courseOutline', e.target.value)} className="resize-none" />
+                      <Textarea id="courseOutline" rows={4} placeholder={"e.g. Module 1: What is Arduino? (20 min video + quiz)\nModule 2: Blink LED (15 min + hands-on)\nModule 3: Buttons and Inputs..."} value={form.courseOutline} onChange={e => set('courseOutline', e.target.value)} className="resize-none" />
                     </div>
 
                     <div className="space-y-2">
@@ -397,7 +397,7 @@ export default function BecomeInstructorPage() {
                       <div className="space-y-2">
                         <Label>Can you teach onsite in Bamenda? <span className="text-accent">*</span></Label>
                         <div className="flex flex-col gap-2">
-                          {['Yes, I'm based in Bamenda', 'Yes, I can travel periodically', 'Online only'].map(opt => (
+                          {["Yes, I'm based in Bamenda", 'Yes, I can travel periodically', 'Online only'].map(opt => (
                             <label key={opt} className={`flex items-center gap-2 px-3 py-2.5 rounded-xl border cursor-pointer text-sm transition-all ${form.canWorkOnsite === opt ? 'border-accent bg-accent/[0.06] text-accent font-semibold' : 'border-black/[0.08] hover:border-accent/30'}`}>
                               <input type="radio" name="canWorkOnsite" value={opt} checked={form.canWorkOnsite === opt} onChange={() => set('canWorkOnsite', opt)} className="sr-only" />
                               <div className={`w-4 h-4 rounded-full border flex items-center justify-center flex-shrink-0 ${form.canWorkOnsite === opt ? 'border-accent' : 'border-black/20'}`}>

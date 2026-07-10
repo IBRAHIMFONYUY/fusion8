@@ -80,7 +80,7 @@ export function LessonEditDialog({
         <Alert className="bg-secondary/50 border-dashed">
           <Globe className="h-4 w-4" />
           <AlertDescription className="text-xs font-medium">
-            Task 1 Fix: File uploads are disabled. Use external URLs (YouTube, GitHub, Figma) to manage lesson resources.
+            Supported video sources: <strong>YouTube</strong> (watch or share link) and <strong>Google Drive</strong> (share link — file must be set to &quot;Anyone with the link&quot;).
           </AlertDescription>
         </Alert>
 
@@ -120,14 +120,14 @@ export function LessonEditDialog({
                 <div className="relative">
                   <Input
                     id="video-url"
-                    placeholder="https://youtube.com/embed/..."
+                    placeholder="https://youtu.be/... or https://drive.google.com/file/d/..."
                     value={editedLesson.videoUrl}
                     onChange={(e) => handleInputChange('videoUrl', e.target.value)}
                     className="pl-10"
                   />
                   <LinkIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 </div>
-                <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">Embed URLs only</p>
+                <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">YouTube share link or Google Drive share link</p>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="duration">Estimated Time (mins)</Label>

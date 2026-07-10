@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { format } from "date-fns"
-import { Trash2, Loader2, CalendarDays } from 'lucide-react';
+import { Trash2, Loader2, CalendarDays, Video, ExternalLink } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth, useCollection, useMemoFirebase, errorEmitter, FirestorePermissionError } from '@/firebase';
 import { collection, query, where, addDoc, serverTimestamp, doc, deleteDoc } from 'firebase/firestore';
@@ -21,11 +21,12 @@ export default function TeacherSchedulePage() {
     const { toast } = useToast();
     const router = useRouter();
     const { user, firestore } = useAuth();
-    
+
     const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
     const [course, setCourse] = useState('');
     const [title, setTitle] = useState('');
     const [time, setTime] = useState('');
+    const [meetLink, setMeetLink] = useState('');
     const [isScheduling, setIsScheduling] = useState(false);
 
     const teacherCoursesQuery = useMemoFirebase(() => {
@@ -47,7 +48,7 @@ export default function TeacherSchedulePage() {
             toast({ variant: 'destructive', title: 'Missing Information' });
             return;
         }
-        
+
         setIsScheduling(true);
         const broadcastPayload = {
             courseId: course,
@@ -56,21 +57,41 @@ export default function TeacherSchedulePage() {
             title,
             date: selectedDate.toISOString(),
             time,
+            meetLink: meetLink.trim() || null,
             createdAt: serverTimestamp(),
             status: 'scheduled'
         };
-        
-            addDoc(collection(firestore, 'broadcasts'), broadcastPayload)
+
+        addDoc(collection(firestore, 'broadcasts'), broadcastPayload)
             .then(async () => {
+                // In-app notification to enrolled students
                 await notificationService.notifyCourseStudents(course, {
-                    message: `New live lab scheduled: "${title}" on ${format(selectedDate, 'PPP')} at ${time}.`,
+                    message: `New live session: "${title}" on ${format(selectedDate, 'PPP')} at ${time}.${meetLink ? ' Google Meet link included.' : ''}`,
                     type: 'LIVE_SESSION',
                     senderId: user.uid
                 });
-                toast({ title: 'Session Synchronized', description: 'Students have been notified via the Hub Dispatch.' });
+
+                // Email notification — fire and forget, don't block the UI
+                fetch('/api/broadcasts/notify', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        courseId: course,
+                        title,
+                        date: selectedDate.toISOString(),
+                        time,
+                        meetLink: meetLink.trim() || '',
+                    }),
+                }).catch(() => null);
+
+                toast({
+                    title: 'Session Scheduled',
+                    description: 'Students notified via in-app alerts and email.',
+                });
                 setCourse('');
                 setTitle('');
                 setTime('');
+                setMeetLink('');
             })
             .catch(async (err: any) => {
                 if (err.code === 'permission-denied') {
@@ -114,7 +135,7 @@ export default function TeacherSchedulePage() {
                 <Card className="border-none shadow-lg">
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2"><CalendarDays className="text-accent" /> Dispatch Calendar</CardTitle>
-                        <CardDescription>Coordinate hardware lab broadcasts and Q&A sessions.</CardDescription>
+                        <CardDescription>Coordinate live sessions and Q&A broadcasts. Students receive email + in-app alerts automatically.</CardDescription>
                     </CardHeader>
                     <CardContent>
                         <Calendar
@@ -131,14 +152,33 @@ export default function TeacherSchedulePage() {
                                 <div className="flex justify-center py-8"><Loader2 className="animate-spin" /></div>
                             ) : classesOnSelectedDay.length > 0 ? (
                                 classesOnSelectedDay.map(c => (
-                                    <div key={c.id} className="p-4 bg-background border rounded-lg flex justify-between items-center shadow-sm">
-                                        <div>
-                                            <p className="font-bold text-sm">{c.title}</p>
-                                            <p className="text-[10px] text-muted-foreground font-mono uppercase">TIME: {c.time} • LAB 01</p>
-                                        </div>
-                                        <div className="flex gap-2">
-                                            <Button size="sm" onClick={() => router.push(`/teacher/live-session/${c.courseId}`)}>Initialize Tunnel</Button>
-                                            <Button size="sm" variant="ghost" onClick={() => handleDelete(c.id)}><Trash2 className="h-4 w-4 text-destructive"/></Button>
+                                    <div key={c.id} className="p-4 bg-background border rounded-lg shadow-sm">
+                                        <div className="flex justify-between items-start gap-4">
+                                            <div className="flex-1 min-w-0">
+                                                <p className="font-bold text-sm">{c.title}</p>
+                                                <p className="text-[10px] text-muted-foreground font-mono uppercase mt-0.5">TIME: {c.time}</p>
+                                                {c.meetLink && (
+                                                    <a href={c.meetLink} target="_blank" rel="noopener noreferrer"
+                                                        className="inline-flex items-center gap-1 text-[10px] text-accent font-bold mt-1 hover:underline">
+                                                        <Video className="h-3 w-3" /> Google Meet link
+                                                        <ExternalLink className="h-2.5 w-2.5" />
+                                                    </a>
+                                                )}
+                                            </div>
+                                            <div className="flex gap-2 shrink-0">
+                                                {c.meetLink ? (
+                                                    <Button size="sm" asChild>
+                                                        <a href={c.meetLink} target="_blank" rel="noopener noreferrer">
+                                                            <Video className="h-3.5 w-3.5 mr-1.5" /> Start Meet
+                                                        </a>
+                                                    </Button>
+                                                ) : (
+                                                    <Button size="sm" onClick={() => router.push(`/teacher/live-session/${c.courseId}`)}>
+                                                        Initialize Tunnel
+                                                    </Button>
+                                                )}
+                                                <Button size="sm" variant="ghost" onClick={() => handleDelete(c.id)}><Trash2 className="h-4 w-4 text-destructive"/></Button>
+                                            </div>
                                         </div>
                                     </div>
                                 ))
@@ -153,7 +193,7 @@ export default function TeacherSchedulePage() {
                  <Card className="border-none shadow-xl bg-primary text-primary-foreground">
                     <CardHeader>
                         <CardTitle>Create Broadcast</CardTitle>
-                        <CardDescription className="text-neutral-400">Initialize a secure broadcast tunnel.</CardDescription>
+                        <CardDescription className="text-neutral-400">Schedule a live session. Enrolled students are emailed automatically.</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
                         <div className="space-y-2">
@@ -169,8 +209,22 @@ export default function TeacherSchedulePage() {
                             </Select>
                         </div>
                          <div className="space-y-2">
-                            <Label htmlFor="title">Broadcast Title</Label>
+                            <Label htmlFor="title">Session Title</Label>
                             <Input id="title" placeholder="e.g., Robot Assembly Live" value={title} onChange={e => setTitle(e.target.value)} className="bg-white/5 border-black/[0.08]" />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="meetLink" className="flex items-center gap-1.5">
+                                <Video className="h-3.5 w-3.5" /> Google Meet Link
+                                <span className="text-neutral-500 font-normal">(optional)</span>
+                            </Label>
+                            <Input
+                                id="meetLink"
+                                type="url"
+                                placeholder="https://meet.google.com/xxx-yyyy-zzz"
+                                value={meetLink}
+                                onChange={e => setMeetLink(e.target.value)}
+                                className="bg-white/5 border-black/[0.08]"
+                            />
                         </div>
                         <div className="grid grid-cols-2 gap-4">
                              <div className="space-y-2">

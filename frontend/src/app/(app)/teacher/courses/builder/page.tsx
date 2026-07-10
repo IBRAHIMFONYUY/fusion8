@@ -36,10 +36,13 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useCourseBuilder } from '@/hooks/useCourseBuilder';
 import { useToast } from '@/hooks/use-toast';
-import { GripVertical, PlusCircle, Trash2, Upload, Edit, Loader2, BookOpen, ImageIcon, Send, RefreshCcw } from 'lucide-react';
+import { GripVertical, PlusCircle, Trash2, Upload, Edit, Loader2, BookOpen, ImageIcon, Send, RefreshCcw, Link as LinkIcon, X } from 'lucide-react';
 import type { Lesson, Module, CourseCategory, CourseLevel } from '@/hooks/useCourseBuilder';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import React, { useState, useEffect } from 'react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import React, { useState, useEffect, useRef } from 'react';
+import { storage } from '@/firebase';
+import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { LessonEditDialog } from '@/components/lesson-edit-dialog';
 import { lmsService } from '@/services/lms-service';
 import { useAuth } from '@/firebase';
@@ -220,6 +223,44 @@ export default function CourseBuilderPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
   const [isInitialLoading, setIsInitialLoading] = useState(!!courseId);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const thumbnailInputRef = useRef<HTMLInputElement>(null);
+
+  const handleThumbnailUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+    const allowed = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+    if (!allowed.includes(file.type)) {
+      toast({ variant: 'destructive', title: 'Invalid file type', description: 'Please upload a JPG, PNG, WebP, or GIF image.' });
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast({ variant: 'destructive', title: 'File too large', description: 'Maximum thumbnail size is 5 MB.' });
+      return;
+    }
+    setIsUploading(true);
+    setUploadProgress(0);
+    const storageRef = ref(storage, `course-thumbnails/${user.uid}/${Date.now()}-${file.name}`);
+    const task = uploadBytesResumable(storageRef, file);
+    task.on(
+      'state_changed',
+      (snap) => setUploadProgress(Math.round((snap.bytesTransferred / snap.totalBytes) * 100)),
+      (err) => {
+        toast({ variant: 'destructive', title: 'Upload failed', description: err.message });
+        setIsUploading(false);
+      },
+      async () => {
+        const url = await getDownloadURL(task.snapshot.ref);
+        updateCourseInfo('imageUrl', url);
+        setIsUploading(false);
+        setUploadProgress(0);
+        toast({ title: 'Thumbnail uploaded' });
+      }
+    );
+    // Reset input so the same file can be re-selected
+    e.target.value = '';
+  };
 
   const {
     course,
@@ -450,17 +491,93 @@ export default function CourseBuilderPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="imageUrl">Course Thumbnail URL</Label>
-              <div className="flex gap-2">
-                <Input
-                  id="imageUrl"
-                  placeholder="https://images.unsplash.com/photo-..."
-                  value={course.imageUrl}
-                  onChange={(e) => updateCourseInfo('imageUrl', e.target.value)}
-                />
-                <Button variant="outline" size="icon"><ImageIcon className="h-4 w-4" /></Button>
-              </div>
-              <p className="text-xs text-muted-foreground">Use an Unsplash image URL for visual consistency.</p>
+              <Label>Course Thumbnail</Label>
+              <Tabs defaultValue="upload" className="w-full">
+                <TabsList className="h-9 w-full grid grid-cols-2 mb-3">
+                  <TabsTrigger value="upload" className="text-xs font-bold">
+                    <Upload className="h-3.5 w-3.5 mr-1.5" /> Upload Image
+                  </TabsTrigger>
+                  <TabsTrigger value="url" className="text-xs font-bold">
+                    <LinkIcon className="h-3.5 w-3.5 mr-1.5" /> Paste URL
+                  </TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="upload" className="mt-0 space-y-3">
+                  {/* Hidden file input */}
+                  <input
+                    ref={thumbnailInputRef}
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp,image/gif"
+                    className="hidden"
+                    onChange={handleThumbnailUpload}
+                  />
+
+                  {/* Preview or drop zone */}
+                  {course.imageUrl && !isUploading ? (
+                    <div className="relative rounded-xl overflow-hidden border bg-secondary/20 aspect-video">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={course.imageUrl}
+                        alt="Thumbnail preview"
+                        className="w-full h-full object-cover"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => updateCourseInfo('imageUrl', '')}
+                        className="absolute top-2 right-2 h-7 w-7 rounded-full bg-black/60 hover:bg-destructive flex items-center justify-center transition-colors"
+                      >
+                        <X className="h-3.5 w-3.5 text-white" />
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => thumbnailInputRef.current?.click()}
+                      disabled={isUploading}
+                      className="w-full border-2 border-dashed border-border hover:border-accent rounded-xl aspect-video flex flex-col items-center justify-center gap-3 bg-secondary/10 hover:bg-accent/5 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {isUploading ? (
+                        <>
+                          <Loader2 className="h-8 w-8 text-accent animate-spin" />
+                          <span className="text-sm font-bold text-accent">{uploadProgress}%</span>
+                          <span className="text-xs text-muted-foreground">Uploading...</span>
+                        </>
+                      ) : (
+                        <>
+                          <div className="h-12 w-12 rounded-full bg-accent/10 flex items-center justify-center">
+                            <ImageIcon className="h-6 w-6 text-accent" />
+                          </div>
+                          <div className="text-center">
+                            <p className="text-sm font-bold">Click to upload</p>
+                            <p className="text-xs text-muted-foreground mt-1">JPG, PNG, WebP or GIF · max 5 MB</p>
+                          </div>
+                        </>
+                      )}
+                    </button>
+                  )}
+                </TabsContent>
+
+                <TabsContent value="url" className="mt-0 space-y-2">
+                  <Input
+                    id="imageUrl"
+                    placeholder="https://images.unsplash.com/photo-..."
+                    value={course.imageUrl}
+                    onChange={(e) => updateCourseInfo('imageUrl', e.target.value)}
+                  />
+                  {course.imageUrl && (
+                    <div className="rounded-xl overflow-hidden border bg-secondary/20 aspect-video">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={course.imageUrl}
+                        alt="Thumbnail preview"
+                        className="w-full h-full object-cover"
+                        onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                      />
+                    </div>
+                  )}
+                  <p className="text-xs text-muted-foreground">Paste any publicly accessible image URL.</p>
+                </TabsContent>
+              </Tabs>
             </div>
             <div className="space-y-2">
               <Label htmlFor="description">Subtitle</Label>
