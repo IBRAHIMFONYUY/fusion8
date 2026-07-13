@@ -52,6 +52,18 @@ const nextConfig: NextConfig = {
 
   // Bundle size: only server-side packages should stay external
   serverExternalPackages: ['firebase-admin'],
+
+  // The lesson player was consolidated onto /student/learn/[courseId]
+  // (query-param lesson selection); the old path-param route is gone.
+  async redirects() {
+    return [
+      {
+        source: '/student/courses/:id/lesson/:lessonId',
+        destination: '/student/learn/:id?lessonId=:lessonId',
+        permanent: false,
+      },
+    ];
+  },
 };
 
 export default nextConfig;

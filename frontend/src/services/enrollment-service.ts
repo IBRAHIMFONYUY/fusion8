@@ -7,17 +7,9 @@ import {
 } from 'firebase/firestore';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
+import type { Enrollment } from '@/types';
 
-export interface Enrollment {
-  id: string;
-  studentId: string;
-  courseId: string;
-  status: 'active' | 'pending_payment';
-  progress: number;
-  completedLessons: string[];
-  enrolledAt: any;
-  lastAccessedAt?: any;
-}
+export type { Enrollment };
 
 export const enrollmentService = {
   /**

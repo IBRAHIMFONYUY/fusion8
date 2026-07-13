@@ -132,7 +132,7 @@ const PROJECTS = [
 const FAQS = [
   {
     q: 'How much does it cost and what does the fee cover?',
-    a: 'The program costs 5,000 XAF for the full 7-week cohort. This covers lab access, component kits, mentorship sessions, and your Demo Day slot. There are no hidden fees. Payment is made after your application is accepted.',
+    a: 'The program costs 15,000 XAF for the full 7-week cohort. This covers lab access, component kits, mentorship sessions, and your Demo Day slot. There are no hidden fees. Payment is made after your application is accepted.',
   },
   {
     q: 'Do I need prior engineering or coding experience?',

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifySession } from '@/lib/auth-actions';
+import { adminDb } from '@/firebase/admin';
 import { buildHtmlBody, buildSubject, type EmailTemplate } from '@/services/email-service';
 
 const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY;
@@ -49,6 +50,17 @@ export async function POST(request: NextRequest) {
     const session = await verifySession();
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized.' }, { status: 401 });
+    }
+
+    // A caller may only send these templates to themselves, unless they're an
+    // admin — otherwise any signed-in user could email an arbitrary address.
+    const toEmail = (body.to || '').toLowerCase();
+    const isSelf = session.email?.toLowerCase() === toEmail;
+    if (!isSelf) {
+      const adminDoc = await adminDb.collection('roles_admin').doc(session.uid).get();
+      if (!adminDoc.exists) {
+        return NextResponse.json({ error: 'Cannot send email to another user.' }, { status: 403 });
+      }
     }
   }
 

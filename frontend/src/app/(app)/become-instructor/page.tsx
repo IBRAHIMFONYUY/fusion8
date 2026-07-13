@@ -13,8 +13,7 @@ import {
   BookOpen, MessageCircle, Cpu, Globe, Link2,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
-import { firestore } from '@/firebase';
+import { submitTeacherApplication } from '@/lib/application-actions';
 
 const STEPS = [
   { label: 'Personal Info', icon: User },
@@ -77,12 +76,15 @@ type FormData = {
   canWorkOnsite: string;
   hoursPerWeek: string;
   availableFrom: string;
+  // Honeypot — visually hidden; a real visitor never fills this in.
+  website: string;
 };
 
 const EMPTY: FormData = {
   fullName: '', email: '', phone: '', gender: '', city: '', linkedIn: '', github: '',
   yearsExperience: '', currentOccupation: '', employer: '', expertise: [], hasTaughtBefore: '', teachingHistory: '',
   proposedTopics: '', courseOutline: '', motivation: '', canWorkOnsite: '', hoursPerWeek: '', availableFrom: '',
+  website: '',
 };
 
 export default function BecomeInstructorPage() {
@@ -114,32 +116,12 @@ export default function BecomeInstructorPage() {
   const handleSubmit = async () => {
     setIsSubmitting(true);
     try {
-      await addDoc(collection(firestore, 'teacher_applications'), {
-        fullName: form.fullName.trim(),
-        email: form.email.trim().toLowerCase(),
-        phone: form.phone.trim(),
-        gender: form.gender,
-        city: form.city.trim(),
-        linkedIn: form.linkedIn.trim(),
-        github: form.github.trim(),
-        yearsExperience: form.yearsExperience,
-        currentOccupation: form.currentOccupation.trim(),
-        employer: form.employer.trim(),
-        expertise: form.expertise,
-        subjects: form.expertise.join(', '),
-        hasTaughtBefore: form.hasTaughtBefore,
-        teachingHistory: form.teachingHistory.trim(),
-        proposedTopics: form.proposedTopics.trim(),
-        courseOutline: form.courseOutline.trim(),
-        motivation: form.motivation.trim(),
-        experience: `${form.yearsExperience} — ${form.teachingHistory}`,
-        canWorkOnsite: form.canWorkOnsite,
-        hoursPerWeek: form.hoursPerWeek,
-        availableFrom: form.availableFrom.trim(),
-        status: 'pending',
-        appliedAt: serverTimestamp(),
-      });
-      setSubmitted(true);
+      const result = await submitTeacherApplication(form);
+      if (result.success) {
+        setSubmitted(true);
+      } else {
+        toast({ variant: 'destructive', title: 'Submission failed', description: result.error ?? 'Please try again.' });
+      }
     } catch {
       toast({ variant: 'destructive', title: 'Submission failed', description: 'Please check your connection and try again.' });
     } finally {
@@ -258,6 +240,11 @@ export default function BecomeInstructorPage() {
                 </div>
               </CardHeader>
               <CardContent className="p-6 space-y-5">
+                {/* Honeypot — hidden from real visitors, catches simple bots */}
+                <div className="sr-only" aria-hidden="true">
+                  <Label htmlFor="website">Website</Label>
+                  <Input id="website" name="website" tabIndex={-1} autoComplete="off" value={form.website} onChange={e => set('website', e.target.value)} />
+                </div>
 
                 {/* STEP 1: Personal Info */}
                 {step === 1 && (

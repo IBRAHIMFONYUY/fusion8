@@ -2,7 +2,6 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { Calendar } from "@/components/ui/calendar"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -19,7 +18,6 @@ import type { SecurityRuleContext } from '@/firebase/errors';
 
 export default function TeacherSchedulePage() {
     const { toast } = useToast();
-    const router = useRouter();
     const { user, firestore } = useAuth();
 
     const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
@@ -173,9 +171,7 @@ export default function TeacherSchedulePage() {
                                                         </a>
                                                     </Button>
                                                 ) : (
-                                                    <Button size="sm" onClick={() => router.push(`/teacher/live-session/${c.courseId}`)}>
-                                                        Initialize Tunnel
-                                                    </Button>
+                                                    <p className="text-[10px] text-muted-foreground italic self-center pr-2">No Meet link added</p>
                                                 )}
                                                 <Button size="sm" variant="ghost" onClick={() => handleDelete(c.id)}><Trash2 className="h-4 w-4 text-destructive"/></Button>
                                             </div>

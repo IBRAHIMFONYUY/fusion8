@@ -262,23 +262,29 @@ export default function AdminUsersPage() {
             <h1 className="text-2xl font-bold font-headline mb-1">Central Console</h1>
             <p className="text-muted-foreground text-sm">Organize students, review applications, publish news, and manage platform staff.</p>
         </div>
-        <AlertDialog>
-            <AlertDialogTrigger asChild>
-                <Button variant="destructive" size="sm" className="font-bold">
-                    <Trash2 className="mr-2 h-4 w-4" /> Reset Platform Data
-                </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-                <AlertDialogHeader>
-                    <AlertDialogTitle>Total Purge Confirmation</AlertDialogTitle>
-                    <AlertDialogDescription>This will delete absolutely ALL generated data (users, courses, applications, logs).</AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                    <AlertDialogCancel>Abort</AlertDialogCancel>
-                    <AlertDialogAction onClick={handlePlatformWipe} className="bg-destructive hover:bg-destructive/90">Confirm Purge</AlertDialogAction>
-                </AlertDialogFooter>
-            </AlertDialogContent>
-        </AlertDialog>
+        {/* Destructive full-platform wipe — hidden by default for launch.
+            Set NEXT_PUBLIC_ENABLE_PLATFORM_WIPE=true locally if you need it
+            for a staging reset; there is no confirmation-typing/re-auth step
+            behind this, so keep it off in any environment with real user data. */}
+        {process.env.NEXT_PUBLIC_ENABLE_PLATFORM_WIPE === 'true' && (
+          <AlertDialog>
+              <AlertDialogTrigger asChild>
+                  <Button variant="destructive" size="sm" className="font-bold">
+                      <Trash2 className="mr-2 h-4 w-4" /> Reset Platform Data
+                  </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                  <AlertDialogHeader>
+                      <AlertDialogTitle>Total Purge Confirmation</AlertDialogTitle>
+                      <AlertDialogDescription>This will delete absolutely ALL generated data (users, courses, applications, logs).</AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                      <AlertDialogCancel>Abort</AlertDialogCancel>
+                      <AlertDialogAction onClick={handlePlatformWipe} className="bg-destructive hover:bg-destructive/90">Confirm Purge</AlertDialogAction>
+                  </AlertDialogFooter>
+              </AlertDialogContent>
+          </AlertDialog>
+        )}
       </div>
 
       <Tabs defaultValue="students" className="w-full">

@@ -1,5 +1,9 @@
 'use server';
 
+// DEAD CODE — no callers anywhere in the app; the live "Quick Summary" feature
+// uses the local heuristic in src/lib/summary-utils.ts instead. Kept here for
+// potential future use, not wired to any UI.
+
 /**
  * @fileOverview AI flow to generate a summary of a course or video lesson.
  *

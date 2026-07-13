@@ -210,6 +210,11 @@ service cloud.firestore {
       allow create: if true; // Public endpoint for joining the newsletter
     }
 
+    match /news_updates/{newsId} {
+      allow read:   if true; // Public — platform announcements/bulletins
+      allow write:  if isAdmin();
+    }
+
 
     // =========================================================================
     // ── 3. SECURITY MARKER COLLECTIONS ───────────────────────────────────────

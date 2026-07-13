@@ -67,7 +67,7 @@ export function AssignmentSubmissionForm({
       teacherId: assignment.teacherId, // Required for security rules
       submissionLink,
       problems,
-      status: 'Submitted',
+      status: 'pending',
       submittedAt: serverTimestamp(),
     };
 

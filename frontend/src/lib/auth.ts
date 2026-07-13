@@ -13,6 +13,7 @@ import {
 import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, firestore } from '@/firebase';
 import { createSession, destroySession } from '@/lib/auth-actions';
+import { isCEO as isCEOShared } from '@/lib/ceo';
 
 export type UserRole = 'student' | 'teacher' | 'admin';
 
@@ -37,12 +38,11 @@ export interface UserProfile {
 export const PLATFORM_ADMIN_EMAIL =
   process.env.NEXT_PUBLIC_PLATFORM_ADMIN_EMAIL ?? 'ceo@fusion8.com';
 
-const PLATFORM_ADMIN_UID =
+export const PLATFORM_ADMIN_UID =
   process.env.NEXT_PUBLIC_PLATFORM_ADMIN_UID ?? '';
 
 function isCEO(email: string | null | undefined, uid: string): boolean {
-  if (PLATFORM_ADMIN_UID && uid === PLATFORM_ADMIN_UID) return true;
-  return !!email && email.toLowerCase() === PLATFORM_ADMIN_EMAIL.toLowerCase();
+  return isCEOShared(email, uid, PLATFORM_ADMIN_EMAIL, PLATFORM_ADMIN_UID);
 }
 
 function mapAuthError(error: AuthError): string {

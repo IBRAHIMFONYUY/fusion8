@@ -3,6 +3,7 @@
 import { cookies } from 'next/headers';
 import { adminAuth, adminDb } from '@/firebase/admin';
 import { FieldValue } from 'firebase-admin/firestore';
+import { isCEO } from '@/lib/ceo';
 
 const SESSION_COOKIE = '__session';
 // Firebase session cookies support up to 14 days. We use 5.
@@ -109,9 +110,12 @@ export async function adminCreateUser(params: {
       emailVerified: false,
     });
 
-    const isAdmin =
-      normalizedEmail === process.env.PLATFORM_ADMIN_EMAIL ||
-      userRecord.uid === process.env.PLATFORM_ADMIN_UID;
+    const isAdmin = isCEO(
+      normalizedEmail,
+      userRecord.uid,
+      process.env.PLATFORM_ADMIN_EMAIL ?? '',
+      process.env.PLATFORM_ADMIN_UID ?? ''
+    );
 
     const finalRole = isAdmin ? 'admin' : role;
 
@@ -165,6 +169,15 @@ export async function approveTeacher(params: {
   applicationId?: string;
   email?: string;
 }): Promise<{ success: boolean; error?: string }> {
+  const session = await verifySession();
+  if (!session) {
+    return { success: false, error: 'Unauthorized.' };
+  }
+  const callerAdmin = await adminDb.collection('roles_admin').doc(session.uid).get();
+  if (!callerAdmin.exists) {
+    return { success: false, error: 'Admin privileges required.' };
+  }
+
   const { teacherUid, applicationId, email } = params;
   try {
     const batch = adminDb.batch();
@@ -209,6 +222,15 @@ export async function rejectTeacher(
   teacherUid: string,
   reason?: string
 ): Promise<{ success: boolean; error?: string }> {
+  const session = await verifySession();
+  if (!session) {
+    return { success: false, error: 'Unauthorized.' };
+  }
+  const callerAdmin = await adminDb.collection('roles_admin').doc(session.uid).get();
+  if (!callerAdmin.exists) {
+    return { success: false, error: 'Admin privileges required.' };
+  }
+
   try {
     const batch = adminDb.batch();
 
@@ -238,6 +260,15 @@ export async function rejectTeacher(
 export async function promoteToAdmin(
   targetUid: string
 ): Promise<{ success: boolean; error?: string }> {
+  const session = await verifySession();
+  if (!session) {
+    return { success: false, error: 'Unauthorized.' };
+  }
+  const callerAdmin = await adminDb.collection('roles_admin').doc(session.uid).get();
+  if (!callerAdmin.exists) {
+    return { success: false, error: 'Admin privileges required.' };
+  }
+
   try {
     const batch = adminDb.batch();
 
@@ -267,6 +298,15 @@ export async function promoteToAdmin(
 export async function adminRevokeUserSessions(
   targetUid: string
 ): Promise<{ success: boolean; error?: string }> {
+  const session = await verifySession();
+  if (!session) {
+    return { success: false, error: 'Unauthorized.' };
+  }
+  const callerAdmin = await adminDb.collection('roles_admin').doc(session.uid).get();
+  if (!callerAdmin.exists) {
+    return { success: false, error: 'Admin privileges required.' };
+  }
+
   try {
     await adminAuth.revokeRefreshTokens(targetUid);
     return { success: true };
