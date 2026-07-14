@@ -15,6 +15,7 @@ import {
 } from 'firebase/firestore';
 import { firestore, useAuth } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
+import type { Enrollment } from '@/types';
 import {
   Card,
   CardContent,
@@ -87,16 +88,6 @@ interface Mentee {
   attendanceMode?: 'online' | 'onsite';
   courseTitles?: string[];
   enrolledDaysAgo?: number;
-}
-
-interface Enrollment {
-  id: string;
-  studentId: string;
-  courseId: string;
-  progress?: number;
-  status?: string;
-  attendanceMode?: string;
-  createdAt?: { toDate?: () => Date } | null;
 }
 
 interface MentorSession {

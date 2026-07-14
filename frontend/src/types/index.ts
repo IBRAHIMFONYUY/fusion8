@@ -274,3 +274,111 @@ export interface LabBooking {
   approvedBy?: string;
   createdAt?: any;
 }
+
+// ── Enrollment ────────────────────────────────────────────────────────────────
+
+export interface Enrollment {
+  id: string;
+  studentId: string;
+  courseId: string;
+  status: 'active' | 'pending_payment' | string;
+  progress?: number;
+  completedLessons?: string[];
+  enrolledAt?: any;
+  lastAccessedAt?: any;
+  createdAt?: any;
+  attendanceMode?: string;
+  scholarship?: boolean;
+  grantSource?: string;
+}
+
+// ── Submission ────────────────────────────────────────────────────────────────
+// Two write paths currently produce docs in the `submissions` collection: the
+// inline lesson-assignment flow (lessonId/externalUrl/notes) and the standalone
+// assignments flow (assignmentId/submissionLink/problems). Both sets of fields
+// are optional here rather than forcing a rename at every write site.
+
+export interface Submission {
+  id: string;
+  studentId: string;
+  studentName?: string;
+  courseId?: string;
+  teacherId?: string;
+  status: 'pending' | 'passed' | 'needs_revision' | string;
+  grade?: string;
+  feedback?: string;
+  submittedAt?: any;
+  gradedAt?: any;
+  // Inline lesson-assignment flow
+  lessonId?: string;
+  lessonTitle?: string;
+  moduleId?: string;
+  externalUrl?: string;
+  notes?: string;
+  // Standalone assignments flow
+  assignmentId?: string;
+  assignmentTitle?: string;
+  submissionLink?: string;
+  problems?: string;
+}
+
+// ── Notification ──────────────────────────────────────────────────────────────
+
+export interface Notification {
+  id: string;
+  userId: string;
+  message?: string;
+  title?: string;
+  body?: string;
+  type: string;
+  senderId?: string;
+  courseId?: string;
+  createdAt?: any;
+  read: boolean;
+  global?: boolean;
+  adminOnly?: boolean;
+}
+
+// ── Broadcast (live sessions) ─────────────────────────────────────────────────
+
+export interface Broadcast {
+  id: string;
+  courseId: string;
+  teacherId: string;
+  teacherName?: string;
+  title: string;
+  date: any;
+  time: string;
+  meetLink?: string;
+  createdAt?: any;
+  status: 'scheduled' | string;
+}
+
+// ── Cohort application ────────────────────────────────────────────────────────
+
+export interface CohortApplication {
+  id: string;
+  fullName: string;
+  email: string;
+  phone: string;
+  age: string;
+  gender: string;
+  location: string;
+  educationLevel: string;
+  occupation: string;
+  ageLocation?: string;
+  currentSkills?: string;
+  previousHardware?: string;
+  howHeard?: string;
+  projectIdea?: string;
+  expectations?: string;
+  biggestChallenge?: string;
+  hasDevice?: boolean;
+  canCommit?: boolean;
+  emergencyName?: string;
+  emergencyPhone?: string;
+  paymentRef?: string;
+  studentId?: string | null;
+  status: 'pending' | 'approved' | 'rejected' | string;
+  appliedAt?: any;
+}

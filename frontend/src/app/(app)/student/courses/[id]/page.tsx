@@ -7,20 +7,25 @@ import { firestore, useAuth, useDoc, useCollection, useMemoFirebase } from '@/fi
 import { paymentService } from '@/services/payment-service';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import Link from 'next/link';
-import { PlayCircle, Video, Loader2, AlertCircle, BookOpen, Clock, Star, ArrowRight, CheckCircle } from 'lucide-react';
+import { PlayCircle, Video, Loader2, AlertCircle, BookOpen, Clock, Star, ArrowRight, CheckCircle, Download, GraduationCap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
+import { useToast } from '@/hooks/use-toast';
+import { issueCertificateAction } from '@/lib/certificate-actions';
+import { downloadCertificate } from '@/services/certificate-service';
 
 export default function StudentCoursePage() {
   const params = useParams<{ id: string }>();
   const courseId = params?.id;
   const { user, role, isLoading: authLoading } = useAuth();
   const router = useRouter();
-  
+  const { toast } = useToast();
+
   const [isEnrolled, setIsEnrolled] = useState<boolean | null>(null);
+  const [isDownloadingCert, setIsDownloadingCert] = useState(false);
 
   // Real-time Course Data
   const courseRef = useMemoFirebase(() => 
@@ -67,6 +72,34 @@ export default function StudentCoursePage() {
     }
     if (!authLoading && user) verifyEnrollment();
   }, [courseId, user, authLoading, router, role, course, courseLoading]);
+
+  const handleDownloadCertificate = async () => {
+    if (!user || !courseId || !course) return;
+    setIsDownloadingCert(true);
+    try {
+      const result = await issueCertificateAction(courseId);
+      if (!result.success || !result.certificate) {
+        toast({ variant: 'destructive', title: 'Could not issue certificate', description: result.error ?? 'Please try again.' });
+        return;
+      }
+      const cert = result.certificate;
+      await downloadCertificate(
+        {
+          studentName: cert.studentName,
+          courseTitle: cert.courseTitle,
+          completionDate: new Date(cert.issuedAt),
+          studentId: cert.studentId,
+          courseId: cert.courseId,
+          instructorName: cert.instructorName,
+        },
+        cert.certId
+      );
+    } catch {
+      toast({ variant: 'destructive', title: 'Download failed', description: 'Please try again.' });
+    } finally {
+      setIsDownloadingCert(false);
+    }
+  };
 
   if (courseError) {
     return (
@@ -126,10 +159,15 @@ export default function StudentCoursePage() {
                 </div>
                 {firstLesson ? (
                   <Button asChild size="lg" className="mt-8 bg-accent hover:bg-accent/90 text-accent-foreground font-bold h-14 px-8 sm:px-10 rounded-full shadow-xl transform transition-transform hover:scale-105">
-                    <Link href={`/student/courses/${course.id}/lesson/${firstLesson.id}`}>
+                    <Link href={`/student/learn/${course.id}?lessonId=${firstLesson.id}`}>
                       {completedLessons.length > 0 ? 'Continue Learning' : 'Start Taking Lessons'} <ArrowRight className="ml-2 h-5 w-5" />
                     </Link>
                   </Button>
+                ) : progress >= 100 ? (
+                  <div className="mt-8 flex items-center gap-3 p-4 bg-green-500/10 border border-green-500/20 rounded-xl text-sm text-green-400 max-w-sm">
+                    <GraduationCap className="h-5 w-5 shrink-0" />
+                    Course complete — download your certificate below.
+                  </div>
                 ) : (
                   <div className="mt-8 p-4 bg-white/5 border border-black/[0.08] rounded-xl text-sm italic text-neutral-400 max-w-sm">
                     The instructor is currently uploading the curriculum content. Please check back shortly.
@@ -158,7 +196,7 @@ export default function StudentCoursePage() {
                                           const isDone = completedLessons.includes(lesson.id);
                                           return (
                                             <li key={lesson.id}>
-                                                <Link href={`/student/courses/${course.id}/lesson/${lesson.id}`}>
+                                                <Link href={`/student/learn/${course.id}?lessonId=${lesson.id}`}>
                                                     <div className="flex items-center justify-between px-6 py-5 hover:bg-accent/5 transition-all group">
                                                         <div className="flex items-center gap-5">
                                                             <div className="text-3xl font-black text-muted-foreground/20 group-hover:text-accent/40 transition-colors">
@@ -215,6 +253,16 @@ export default function StudentCoursePage() {
                             <Progress value={progress} className="mt-4 h-2" />
                         </div>
                         <div className="space-y-3">
+                          {progress >= 100 && (
+                            <Button
+                              onClick={handleDownloadCertificate}
+                              disabled={isDownloadingCert}
+                              className="w-full h-12 rounded-xl font-bold bg-green-600 hover:bg-green-700 text-white"
+                            >
+                              {isDownloadingCert ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
+                              Download Certificate
+                            </Button>
+                          )}
                           <Button asChild variant="default" className="w-full h-12 rounded-xl font-bold bg-primary hover:bg-primary/90">
                             <Link href="/student/dashboard">Back to Hub</Link>
                           </Button>

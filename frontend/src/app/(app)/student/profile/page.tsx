@@ -9,17 +9,21 @@ import { Progress } from '@/components/ui/progress';
 import {
   BookOpen, CheckCircle, Flame, ClipboardList, ArrowRight,
   Loader2, Calendar, Trophy, Clock, Rocket, Star, TrendingUp,
-  ChevronRight,
+  ChevronRight, Award, Download, ShieldCheck,
 } from 'lucide-react';
 import { useAuth, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, query, where, doc, getDoc } from 'firebase/firestore';
 import { deriveAchievements, ACHIEVEMENT_DEFINITIONS } from '@/types';
+import { useToast } from '@/hooks/use-toast';
+import { downloadCertificate } from '@/services/certificate-service';
 
 export default function StudentProfilePage() {
   const { user, firestore, isLoading: authLoading } = useAuth();
+  const { toast } = useToast();
   const [activeCourses, setActiveCourses] = useState<any[]>([]);
   const [lessonsCompleted, setLessonsCompleted] = useState(0);
   const [profileData, setProfileData] = useState<any>(null);
+  const [downloadingCertId, setDownloadingCertId] = useState<string | null>(null);
 
   // Enrollments
   const enrollmentsQuery = useMemoFirebase(() => {
@@ -45,6 +49,13 @@ export default function StudentProfilePage() {
     return query(collection(firestore, 'projects'), where(`members.${user.uid}`, '!=', null));
   }, [firestore, user]);
   const { data: myProjects } = useCollection(projectsQuery);
+
+  // Certificates
+  const certificatesQuery = useMemoFirebase(() => {
+    if (!firestore || !user) return null;
+    return query(collection(firestore, 'certificates'), where('studentId', '==', user.uid));
+  }, [firestore, user]);
+  const { data: certificates } = useCollection<any>(certificatesQuery);
 
   // User profile (streak, xp)
   useEffect(() => {
@@ -122,6 +133,27 @@ export default function StudentProfilePage() {
   const joinDate = user?.metadata?.creationTime
     ? new Date(user.metadata.creationTime).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
     : null;
+
+  const handleDownloadCert = async (cert: any) => {
+    setDownloadingCertId(cert.certId);
+    try {
+      await downloadCertificate(
+        {
+          studentName: cert.studentName,
+          courseTitle: cert.courseTitle,
+          completionDate: cert.issuedAt?.toDate ? cert.issuedAt.toDate() : new Date(),
+          studentId: cert.studentId,
+          courseId: cert.courseId,
+          instructorName: cert.instructorName,
+        },
+        cert.certId
+      );
+    } catch {
+      toast({ variant: 'destructive', title: 'Download failed', description: 'Please try again.' });
+    } finally {
+      setDownloadingCertId(null);
+    }
+  };
 
   const projectStatusLabel = (status: string) =>
     status === 'in_progress' ? 'Active' : status === 'recruiting' ? 'Recruiting' : 'Done';
@@ -420,6 +452,47 @@ export default function StudentProfilePage() {
               </div>
             )}
           </div>
+
+          {/* Certificates */}
+          {certificates && certificates.length > 0 && (
+            <div>
+              <h2 className="text-lg font-bold font-headline mb-4 flex items-center gap-2">
+                <Award className="h-4.5 w-4.5 text-amber-500" />
+                Certificates
+              </h2>
+              <div className="space-y-3">
+                {certificates.map((cert) => (
+                  <Card key={cert.id} className="border border-border bg-card rounded-2xl">
+                    <CardContent className="p-4 flex items-center gap-4">
+                      <div className="w-10 h-10 rounded-xl bg-amber-100 dark:bg-amber-500/15 flex items-center justify-center shrink-0">
+                        <Award className="h-5 w-5 text-amber-600" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold text-sm leading-snug line-clamp-1">{cert.courseTitle}</p>
+                        <p className="text-[11px] text-muted-foreground">
+                          Issued {cert.issuedAt?.toDate ? cert.issuedAt.toDate().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : 'recently'}
+                        </p>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="shrink-0 h-8 rounded-lg text-xs"
+                        disabled={downloadingCertId === cert.certId}
+                        onClick={() => handleDownloadCert(cert)}
+                      >
+                        {downloadingCertId === cert.certId ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />}
+                      </Button>
+                      <Button asChild size="sm" variant="ghost" className="shrink-0 h-8 w-8 p-0 rounded-lg">
+                        <NextLink href={`/verify/${cert.certId}`} target="_blank" title="Verify certificate">
+                          <ShieldCheck className="h-4 w-4" />
+                        </NextLink>
+                      </Button>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Right column: Projects + Activity */}

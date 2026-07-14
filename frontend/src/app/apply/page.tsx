@@ -13,9 +13,8 @@ import {
   Check, MessageCircle, MapPin, Phone, Mail, ChevronRight,
   ChevronLeft, Loader2, User, GraduationCap, Heart, Zap,
 } from 'lucide-react';
-import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
-import { firestore } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
+import { submitCohortApplication } from '@/lib/application-actions';
 
 const STEPS = [
   { n: '01', t: 'Your Details', icon: User },
@@ -96,6 +95,8 @@ type FormData = {
   emergencyName: string;
   emergencyPhone: string;
   paymentRef: string;
+  // Honeypot — visually hidden; a real visitor never fills this in.
+  website: string;
 };
 
 const EMPTY: FormData = {
@@ -104,6 +105,7 @@ const EMPTY: FormData = {
   currentSkills: '', previousHardware: '', howHeard: '',
   projectIdea: '', expectations: '', biggestChallenge: '',
   hasDevice: false, canCommit: false, emergencyName: '', emergencyPhone: '', paymentRef: '',
+  website: '',
 };
 
 export default function ApplyPage() {
@@ -126,37 +128,12 @@ export default function ApplyPage() {
   const handleSubmit = async () => {
     setIsSubmitting(true);
     try {
-      await addDoc(collection(firestore, 'cohort_applications'), {
-        // Personal
-        fullName: form.fullName.trim(),
-        email: form.email.trim().toLowerCase(),
-        phone: form.phone.trim(),
-        age: form.age,
-        gender: form.gender,
-        location: form.location.trim(),
-        educationLevel: form.educationLevel,
-        occupation: form.occupation,
-        ageLocation: `${form.age} yrs — ${form.location}`,
-        // Background
-        currentSkills: form.currentSkills.trim(),
-        previousHardware: form.previousHardware.trim(),
-        howHeard: form.howHeard,
-        // Motivation
-        projectIdea: form.projectIdea.trim(),
-        expectations: form.expectations.trim(),
-        biggestChallenge: form.biggestChallenge.trim(),
-        // Commitment
-        hasDevice: form.hasDevice,
-        canCommit: form.canCommit,
-        emergencyName: form.emergencyName.trim(),
-        emergencyPhone: form.emergencyPhone.trim(),
-        paymentRef: form.paymentRef.trim(),
-        // Meta
-        studentId: null,
-        status: 'pending',
-        appliedAt: serverTimestamp(),
-      });
-      setStep(5);
+      const result = await submitCohortApplication(form);
+      if (result.success) {
+        setStep(5);
+      } else {
+        toast({ variant: 'destructive', title: 'Submission failed', description: result.error ?? 'Please try again.' });
+      }
     } catch {
       toast({ variant: 'destructive', title: 'Submission failed', description: 'Please check your connection and try again.' });
     } finally {
@@ -242,6 +219,11 @@ export default function ApplyPage() {
                   </div>
 
                   <div className="p-6 space-y-5">
+                    {/* Honeypot — hidden from real visitors, catches simple bots */}
+                    <div className="sr-only" aria-hidden="true">
+                      <Label htmlFor="website">Website</Label>
+                      <Input id="website" name="website" tabIndex={-1} autoComplete="off" value={form.website} onChange={e => set('website', e.target.value)} />
+                    </div>
                     {/* STEP 1: Personal Details */}
                     {step === 1 && (
                       <>

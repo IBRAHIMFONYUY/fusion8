@@ -5,21 +5,24 @@ import Link from 'next/link';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { PlayCircle, CheckCircle, Loader2, ArrowLeft, ArrowRight, FileText, UploadCloud, Info, Lock } from 'lucide-react';
+import { PlayCircle, CheckCircle, Loader2, ArrowLeft, ArrowRight, FileText, UploadCloud, Info, Lock, Lightbulb } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { cn } from '@/lib/utils';
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useActionState, startTransition } from 'react';
 import { useDoc, useCollection, useMemoFirebase, useAuth } from '@/firebase';
 import { doc, collection, query, orderBy, where, getDocs, setDoc, serverTimestamp } from 'firebase/firestore';
 import { Badge } from '@/components/ui/badge';
 import { VideoPlayer } from '@/components/video-player';
 import { enrollmentService } from '@/services/enrollment-service';
 import { useToast } from '@/hooks/use-toast';
+import { issueCertificateAction } from '@/lib/certificate-actions';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Skeleton } from '@/components/ui/skeleton';
+import { getAiSummaryAction } from '@/lib/actions';
 
 function LearnPlayerContent() {
   const params = useParams<{ courseId: string }>();
@@ -49,12 +52,22 @@ function LearnPlayerContent() {
   const { data: modulesList, isLoading: modulesLoading } = useCollection<any>(modulesQuery);
   const { data: allLessons, isLoading: lessonsLoading } = useCollection<any>(lessonsQuery);
 
+  const [summaryState, summaryFormAction, isSummaryPending] = useActionState(getAiSummaryAction, { summary: undefined, error: undefined });
+
   // Fallback to first lesson if not in URL
   useEffect(() => {
     if (!activeLessonId && allLessons && allLessons.length > 0) {
       router.replace(`/student/learn/${params?.courseId}?lessonId=${allLessons[0].id}`);
     }
   }, [activeLessonId, allLessons, params?.courseId, router]);
+
+  // Enrollment gate — redirect unenrolled/inactive users to the course detail page
+  useEffect(() => {
+    if (enrollLoading || !user || !params?.courseId) return;
+    if (enrollment === null || enrollment?.status !== 'active') {
+      router.replace(`/courses/${params.courseId}?enroll=1`);
+    }
+  }, [enrollment, enrollLoading, user, params?.courseId, router]);
 
   const currentLesson = useMemo(() => {
     if (!allLessons || !activeLessonId) return null;
@@ -114,15 +127,24 @@ function LearnPlayerContent() {
 
     setIsMarkingComplete(true);
     try {
-      await enrollmentService.markLessonComplete(
-        firestore, 
-        user.uid, 
-        params.courseId, 
-        activeLessonId, 
+      const result = await enrollmentService.markLessonComplete(
+        firestore,
+        user.uid,
+        params.courseId,
+        activeLessonId,
         allLessons.length
       );
-      toast({ title: "Lesson Completed", description: "Your progress has been updated." });
-      
+
+      if (result && !result.alreadyComplete && result.progress >= 100) {
+        toast({ title: "🎓 Course complete!", description: "Your certificate has been issued — find it on your profile." });
+        issueCertificateAction(params.courseId).catch(() => {
+          // Non-fatal: completion itself already succeeded. The student can
+          // retry issuance from the course page or profile.
+        });
+      } else {
+        toast({ title: "Lesson Completed", description: "Your progress has been updated." });
+      }
+
       if (navigation.next) {
         router.push(`/student/learn/${params.courseId}?lessonId=${navigation.next.id}`);
       }
@@ -274,6 +296,51 @@ function LearnPlayerContent() {
                      {currentLesson.content || "Instructor notes are not currently available for this module."}
                  </div>
              </CardContent>
+          </Card>
+
+          <Card className="border-none shadow-md bg-accent/5 overflow-hidden rounded-2xl ring-1 ring-accent/10">
+            <CardHeader className="pb-4 bg-accent/5 border-b border-accent/10">
+              <CardTitle className="flex items-center gap-2 text-lg font-bold text-accent uppercase tracking-tighter">
+                <Lightbulb className="h-5 w-5" />
+                Quick Summary
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="pt-6">
+              {isSummaryPending ? (
+                <div className="space-y-3 py-2">
+                  <Skeleton className="h-4 w-full bg-accent/10" />
+                  <Skeleton className="h-4 w-[90%] bg-accent/10" />
+                  <Skeleton className="h-4 w-[85%] bg-accent/10" />
+                </div>
+              ) : summaryState?.error ? (
+                <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
+                  {summaryState.error}
+                </div>
+              ) : summaryState?.summary ? (
+                <div className="space-y-3">
+                  <p className="text-xs font-bold uppercase tracking-[0.25em] text-accent">Summary</p>
+                  <div className="prose prose-sm dark:prose-invert max-w-none leading-relaxed text-foreground/80">
+                    {summaryState.summary}
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-6">
+                  <p className="text-muted-foreground text-sm mb-6">Generate a short summary of this lesson's key points.</p>
+                  <Button
+                    onClick={() => {
+                      startTransition(() => {
+                        summaryFormAction(currentLesson.content);
+                      });
+                    }}
+                    variant="secondary"
+                    size="lg"
+                    className="font-bold bg-accent text-accent-foreground hover:bg-accent/90 rounded-full px-10 shadow-lg shadow-accent/20"
+                  >
+                    Generate Summary
+                  </Button>
+                </div>
+              )}
+            </CardContent>
           </Card>
 
           {/* Inline Assignment Logic */}

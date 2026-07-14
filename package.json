@@ -5,10 +5,6 @@
     "dev": "cd frontend && npm run dev",
     "build": "cd frontend && npm run build",
     "frontend": "cd frontend && npm run dev",
-    "backend:deploy": "cd backend && firebase deploy",
-    "backend:functions": "cd backend && firebase deploy --only functions",
-    "backend:rules": "cd backend && firebase deploy --only firestore:rules",
-    "install:frontend": "cd frontend && npm install",
-    "install:backend": "cd backend/functions && npm install"
+    "install:frontend": "cd frontend && npm install"
   }
 }

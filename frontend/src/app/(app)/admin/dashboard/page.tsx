@@ -2,12 +2,12 @@
 
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { DollarSign, Users, BookOpen, Loader2, Rocket, AlertCircle, ShieldCheck, Bell, Activity, ArrowRight, Check } from 'lucide-react';
+import { DollarSign, Users, BookOpen, Loader2, Rocket, AlertCircle, ShieldCheck, Bell, Activity, ArrowRight, Check, Calendar, GraduationCap } from 'lucide-react';
 import Link from 'next/link';
-import { collection, getDocs, query, where, doc, limit, orderBy, deleteDoc } from 'firebase/firestore';
+import { collection, getDocs, getCountFromServer, query, where, doc, limit, orderBy, deleteDoc } from 'firebase/firestore';
 import { firestore, useAuth, errorEmitter, FirestorePermissionError, useCollection, useMemoFirebase } from '@/firebase';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { formatDistanceToNow } from 'date-fns';
+import { formatDistanceToNow, format } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 
@@ -19,8 +19,12 @@ export default function AdminDashboardPage() {
     courseCount: 0,
     activeStudents: 0,
     cohortApps: 0,
-    pendingCourses: 0
+    pendingCourses: 0,
+    pendingTeacherApps: 0,
+    studentCount: 0,
+    teacherCount: 0,
   });
+  const [todaysSessions, setTodaysSessions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -61,11 +65,34 @@ export default function AdminDashboardPage() {
             }
         };
 
-        const [userSnap, courseSnap, activeSnap, appSnap] = await Promise.all([
-          wrapFetch(getDocs(collection(firestore, 'users')), 'users'),
+        const todayStart = new Date();
+        todayStart.setHours(0, 0, 0, 0);
+        const todayEnd = new Date();
+        todayEnd.setHours(23, 59, 59, 999);
+
+        const [
+          userCountSnap,
+          studentCountSnap,
+          teacherCountSnap,
+          courseSnap,
+          activeCountSnap,
+          cohortAppCountSnap,
+          teacherAppCountSnap,
+          todaysBroadcastsSnap,
+        ] = await Promise.all([
+          wrapFetch(getCountFromServer(collection(firestore, 'users')), 'users'),
+          wrapFetch(getCountFromServer(query(collection(firestore, 'users'), where('role', '==', 'student'))), 'users'),
+          wrapFetch(getCountFromServer(query(collection(firestore, 'users'), where('role', '==', 'teacher'))), 'users'),
           wrapFetch(getDocs(collection(firestore, 'courses')), 'courses'),
-          wrapFetch(getDocs(query(collection(firestore, 'enrollments'), where('status', '==', 'active'))), 'enrollments'),
-          wrapFetch(getDocs(query(collection(firestore, 'cohort_applications'), where('status', '==', 'pending'))), 'cohort_applications')
+          wrapFetch(getCountFromServer(query(collection(firestore, 'enrollments'), where('status', '==', 'active'))), 'enrollments'),
+          wrapFetch(getCountFromServer(query(collection(firestore, 'cohort_applications'), where('status', '==', 'pending'))), 'cohort_applications'),
+          wrapFetch(getCountFromServer(query(collection(firestore, 'teacher_applications'), where('status', '==', 'pending'))), 'teacher_applications'),
+          wrapFetch(getDocs(query(
+            collection(firestore, 'broadcasts'),
+            where('date', '>=', todayStart.toISOString()),
+            where('date', '<=', todayEnd.toISOString()),
+            orderBy('date', 'asc')
+          )), 'broadcasts'),
         ]);
 
         const totalRev = courseSnap.docs.reduce((acc: number, doc: any) => acc + (doc.data().price || 0) * (doc.data().enrolledCount || 0), 0);
@@ -73,12 +100,16 @@ export default function AdminDashboardPage() {
 
         setStats({
           totalRevenue: totalRev.toLocaleString() + ' XAF',
-          userCount: userSnap.size,
+          userCount: userCountSnap.data().count,
           courseCount: courseSnap.size,
-          activeStudents: activeSnap.size,
-          cohortApps: appSnap.size,
-          pendingCourses: pendingCount
+          activeStudents: activeCountSnap.data().count,
+          cohortApps: cohortAppCountSnap.data().count,
+          pendingCourses: pendingCount,
+          pendingTeacherApps: teacherAppCountSnap.data().count,
+          studentCount: studentCountSnap.data().count,
+          teacherCount: teacherCountSnap.data().count,
         });
+        setTodaysSessions(todaysBroadcastsSnap.docs.map((d: any) => ({ id: d.id, ...d.data() })));
       } catch (err: any) {
         setError("Governance stream initializing...");
       } finally {
@@ -182,6 +213,19 @@ export default function AdminDashboardPage() {
             <p className="text-xs text-muted-foreground mt-1 font-bold">Digital campus sales</p>
           </CardContent>
         </Card>
+
+        <Link href="/admin/users" className="animate-slide-up-fade opacity-0 animation-delay-300">
+          <Card className="hover:bg-muted transition-colors border-none shadow-lg h-full rounded-2xl bg-card/50 backdrop-blur-sm ring-1 ring-black/5">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Pending Teacher Apps</CardTitle>
+              <GraduationCap className="h-5 w-5 text-primary" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-black font-headline">{stats.pendingTeacherApps}</div>
+              <p className="text-xs text-muted-foreground mt-1 font-bold">Instructor Onboarding Queue</p>
+            </CardContent>
+          </Card>
+        </Link>
       </div>
 
       <div className="grid lg:grid-cols-3 gap-8">
@@ -245,6 +289,15 @@ export default function AdminDashboardPage() {
                         <Users className="h-8 w-8 text-primary/20" />
                     </div>
                     <div className="h-px bg-border border-dashed" />
+                    <div className="flex justify-between items-center text-sm font-bold">
+                        <span className="text-muted-foreground">Students</span>
+                        <span>{stats.studentCount}</span>
+                    </div>
+                    <div className="flex justify-between items-center text-sm font-bold">
+                        <span className="text-muted-foreground">Teachers</span>
+                        <span>{stats.teacherCount}</span>
+                    </div>
+                    <div className="h-px bg-border border-dashed" />
                     <div className="flex justify-between items-center">
                         <div>
                             <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Scholarship Seats</p>
@@ -255,6 +308,32 @@ export default function AdminDashboardPage() {
                     <Button asChild className="w-full bg-primary hover:bg-accent transition-all font-bold rounded-xl h-12 shadow-md">
                         <Link href="/admin/users">Manage Access Portal</Link>
                     </Button>
+                </CardContent>
+            </Card>
+
+            <h2 className="text-xl font-black uppercase tracking-tighter flex items-center gap-2">
+                <Calendar className="h-5 w-5 text-primary" />
+                Today's Sessions
+            </h2>
+            <Card className="border-none shadow-lg bg-card/50 backdrop-blur-sm ring-1 ring-black/5 rounded-2xl">
+                <CardContent className="p-0">
+                    {todaysSessions.length > 0 ? (
+                        <div className="divide-y divide-border/50">
+                            {todaysSessions.map((session) => (
+                                <div key={session.id} className="p-4 flex items-center justify-between gap-3">
+                                    <div>
+                                        <p className="text-sm font-bold leading-tight">{session.title}</p>
+                                        <p className="text-[10px] text-muted-foreground font-mono uppercase mt-1">{session.time} &middot; {session.teacherName}</p>
+                                    </div>
+                                    <Badge variant="outline" className="text-[8px] uppercase tracking-widest h-5 px-2 shrink-0">{session.status || 'Scheduled'}</Badge>
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="p-8 text-center text-muted-foreground italic text-sm">
+                            No live sessions scheduled today.
+                        </div>
+                    )}
                 </CardContent>
             </Card>
         </div>

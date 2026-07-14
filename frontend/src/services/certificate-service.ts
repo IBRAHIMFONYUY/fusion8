@@ -8,7 +8,6 @@
  * verified by employers / institutions using the certificate ID.
  */
 
-import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
 import { firestore } from '@/firebase';
 
 export interface CertificateData {
@@ -22,7 +21,7 @@ export interface CertificateData {
 }
 
 export interface Certificate {
-  id: string;
+  certId: string;
   studentId: string;
   courseId: string;
   studentName: string;
@@ -41,20 +40,13 @@ const BRAND = {
   lightGray: '#F3F4F6',
 };
 
-function generateCertificateId(studentId: string, courseId: string): string {
-  const timestamp = Date.now().toString(36).toUpperCase();
-  const hash = btoa(`${studentId}:${courseId}`)
-    .replace(/[^A-Z0-9]/gi, '')
-    .substring(0, 8)
-    .toUpperCase();
-  return `F8-${hash}-${timestamp}`;
-}
-
 /**
  * Generates a PDF certificate and returns the PDF as a Blob.
  * Uses jsPDF loaded dynamically to keep the main bundle lean.
+ * `certId` must be the ID issued by `issueCertificateAction` (server-side)
+ * so the PDF's embedded ID always matches the Firestore record.
  */
-export async function generateCertificatePDF(data: CertificateData): Promise<Blob> {
+export async function generateCertificatePDF(data: CertificateData, certId: string): Promise<Blob> {
   // Dynamic import keeps jsPDF out of the initial page bundle
   const { jsPDF } = await import('jspdf');
 
@@ -190,7 +182,6 @@ export async function generateCertificatePDF(data: CertificateData): Promise<Blo
   }
 
   // Certificate ID
-  const certId = generateCertificateId(data.studentId, data.courseId);
   doc.setTextColor(BRAND.gray);
   doc.setFontSize(7);
   doc.setFont('helvetica', 'normal');
@@ -213,49 +204,14 @@ export async function generateCertificatePDF(data: CertificateData): Promise<Blo
 }
 
 /**
- * Issues a certificate: generates the PDF, saves metadata to Firestore,
- * and returns the certificate record.
- *
- * Idempotent: if a certificate already exists for this student+course, returns it.
- */
-export async function issueCertificate(data: CertificateData): Promise<Certificate> {
-  const certDocId = `${data.studentId}_${data.courseId}`;
-  const certRef = doc(firestore, 'certificates', certDocId);
-
-  // Return existing certificate if already issued
-  const existing = await getDoc(certRef);
-  if (existing.exists()) {
-    return existing.data() as Certificate;
-  }
-
-  const certId = generateCertificateId(data.studentId, data.courseId);
-  const verificationUrl = `https://fusion8.tech/verify/${certId}`;
-
-  const certificate: Omit<Certificate, 'issuedAt'> & { issuedAt: any } = {
-    id: certId,
-    studentId: data.studentId,
-    courseId: data.courseId,
-    studentName: data.studentName,
-    courseTitle: data.courseTitle,
-    issuedAt: serverTimestamp(),
-    verificationUrl,
-  };
-
-  await setDoc(certRef, certificate);
-
-  return { ...certificate, issuedAt: new Date() };
-}
-
-/**
  * Verify a certificate by ID. Returns null if the certificate does not exist.
  */
 export async function verifyCertificate(certId: string): Promise<Certificate | null> {
   try {
-    // Query by certificate ID (not the doc ID which is studentId_courseId)
     const { collection, query, where, getDocs } = await import('firebase/firestore');
     const q = query(
       collection(firestore, 'certificates'),
-      where('id', '==', certId)
+      where('certId', '==', certId)
     );
     const snap = await getDocs(q);
     if (snap.empty) return null;
@@ -266,10 +222,11 @@ export async function verifyCertificate(certId: string): Promise<Certificate | n
 }
 
 /**
- * Download a certificate PDF for the current user's browser.
+ * Download a certificate PDF for the current user's browser. `certId` must
+ * be the ID returned by `issueCertificateAction`.
  */
-export async function downloadCertificate(data: CertificateData): Promise<void> {
-  const blob = await generateCertificatePDF(data);
+export async function downloadCertificate(data: CertificateData, certId: string): Promise<void> {
+  const blob = await generateCertificatePDF(data, certId);
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;

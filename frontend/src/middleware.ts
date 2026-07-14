@@ -1,10 +1,29 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-// Routes that require an authenticated session cookie.
-// Role-level granularity is handled client-side by RoleGuard after the
-// Firebase context resolves, but we block unauthenticated requests here
-// so server-rendered HTML for protected pages is never sent to strangers.
+// SECURITY MODEL — READ BEFORE CHANGING
+//
+// This middleware runs on the Edge runtime (Next.js default; no
+// `export const runtime` override exists here), where `firebase-admin`
+// cannot run (it depends on Node-only APIs). Because of that, the check
+// below is presence-only: it confirms the __session cookie exists, NOT
+// that it's a currently-valid, unrevoked, unexpired Firebase session.
+// A forged or stale cookie VALUE will pass this check.
+//
+// Real verification happens in two other places instead:
+//   - `verifySession()` (src/lib/auth-actions.ts) cryptographically verifies
+//     the cookie via the Admin SDK inside Server Actions / API routes (Node
+//     runtime) — every privileged mutation must call this, not rely on
+//     middleware having already checked anything.
+//   - `RoleGuard` (src/components/auth/RoleGuard.tsx) enforces per-role
+//     access client-side once Firebase auth state resolves in the browser.
+//
+// So: this middleware's only real job is to stop server-rendered HTML for
+// /student, /teacher, /admin from being sent to a browser with NO cookie at
+// all (a trivial, cheap check). It is not, and should not be treated as, the
+// security boundary for role access or session validity — do not skip
+// `verifySession()`/an admin-marker check in a new server action just
+// because the route is already under a protected prefix here.
 const PROTECTED_PREFIXES = ['/student', '/teacher', '/admin'];
 
 // The __session cookie is written by our setSessionCookie server action

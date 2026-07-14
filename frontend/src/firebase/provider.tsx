@@ -17,16 +17,12 @@ import { Auth, User, onAuthStateChanged } from 'firebase/auth';
 import { FirebaseErrorListener } from '@/components/FirebaseErrorListener';
 import { Button } from '@/components/ui/button';
 import { Clock } from 'lucide-react';
-import { signOut, PLATFORM_ADMIN_EMAIL } from '@/lib/auth';
+import { signOut, PLATFORM_ADMIN_EMAIL, PLATFORM_ADMIN_UID } from '@/lib/auth';
 import { createSession } from '@/lib/auth-actions';
-
-// Read from env — never hardcoded in source. Set NEXT_PUBLIC_PLATFORM_ADMIN_UID
-// in .env.local and in your hosting platform's environment configuration.
-const PLATFORM_ADMIN_UID = process.env.NEXT_PUBLIC_PLATFORM_ADMIN_UID ?? '';
+import { isCEO } from '@/lib/ceo';
 
 function isCEOAccount(email: string | null | undefined, uid: string): boolean {
-  if (PLATFORM_ADMIN_UID && uid === PLATFORM_ADMIN_UID) return true;
-  return !!email && email.toLowerCase() === PLATFORM_ADMIN_EMAIL.toLowerCase();
+  return isCEO(email, uid, PLATFORM_ADMIN_EMAIL, PLATFORM_ADMIN_UID);
 }
 
 interface FirebaseProviderProps {

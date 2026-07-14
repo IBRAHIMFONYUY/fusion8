@@ -43,21 +43,24 @@ const KanbanColumn = ({ title, tasks = [], onTaskClick }: { title: string; tasks
   </div>
 );
 
-const DocumentsTab = () => (
-  <Card className="border-none shadow-xl">
-    <CardContent className="pt-6">
-       <div className="flex justify-between items-center mb-6">
-          <h3 className="font-bold text-lg">Shared Resources</h3>
-          <Button variant="outline"><Plus className="mr-2 h-4 w-4" /> Add URL Resource</Button>
-       </div>
-       <div className="p-12 text-center border-2 border-dashed rounded-lg bg-secondary/20">
-          <FileText className="h-12 w-12 text-muted-foreground/30 mx-auto mb-4" />
-          <p className="text-muted-foreground font-medium">No documents shared yet.</p>
-          <p className="text-xs text-muted-foreground mt-1">Use the "Hub & Spoke" model: Share external links to GitHub, Figma, or Drive.</p>
-       </div>
-    </CardContent>
-  </Card>
-);
+const DocumentsTab = () => {
+  const { toast } = useToast();
+  return (
+    <Card className="border-none shadow-xl">
+      <CardContent className="pt-6">
+         <div className="flex justify-between items-center mb-6">
+            <h3 className="font-bold text-lg">Shared Resources</h3>
+            <Button variant="outline" onClick={() => toast({ title: 'Coming soon', description: "Shared resources aren't available yet." })}><Plus className="mr-2 h-4 w-4" /> Add URL Resource</Button>
+         </div>
+         <div className="p-12 text-center border-2 border-dashed rounded-lg bg-secondary/20">
+            <FileText className="h-12 w-12 text-muted-foreground/30 mx-auto mb-4" />
+            <p className="text-muted-foreground font-medium">No documents shared yet.</p>
+            <p className="text-xs text-muted-foreground mt-1">Use the "Hub & Spoke" model: Share external links to GitHub, Figma, or Drive.</p>
+         </div>
+      </CardContent>
+    </Card>
+  );
+};
 
 export default function ProjectWorkspacePage() {
   const params = useParams<{ id: string }>();

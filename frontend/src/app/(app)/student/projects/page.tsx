@@ -141,7 +141,7 @@ export default function StudentProjectsPage() {
                                                                 <AvatarImage src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${uid}`} />
                                                                 <AvatarFallback>U</AvatarFallback>
                                                             </Avatar>
-                                                            <span className="text-[8px] font-bold text-muted-foreground uppercase">{project.members[uid]}</span>
+                                                            <span className="text-[8px] font-bold text-muted-foreground uppercase">{project.members?.[uid]}</span>
                                                         </div>
                                                     ))}
                                                 </div>
@@ -201,7 +201,7 @@ export default function StudentProjectsPage() {
                                     <CardHeader>
                                         <div className="flex justify-between items-start">
                                             <CardTitle className="text-lg font-headline line-clamp-1">{project.title}</CardTitle>
-                                            <Badge variant="outline" className="text-[10px] uppercase">{project.members[user?.uid || '']}</Badge>
+                                            <Badge variant="outline" className="text-[10px] uppercase">{project.members?.[user?.uid || '']}</Badge>
                                         </div>
                                     </CardHeader>
                                     <CardContent className="flex-1">

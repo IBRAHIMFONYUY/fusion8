@@ -9,22 +9,9 @@ import {
   serverTimestamp,
 } from 'firebase/firestore';
 import { firestore } from '@/firebase';
+import type { Project, ProjectStatus, ProjectCategory } from '@/types';
 
-export type ProjectStatus = 'recruiting' | 'in_progress' | 'completed';
-export type ProjectCategory = 'Agriculture' | 'Health' | 'Fintech' | 'Education' | 'Community' | 'Hardware';
-
-export interface Project {
-  id: string;
-  title: string;
-  description: string;
-  studentLeadId: string;
-  members: Record<string, string>; // Map of UID -> Role
-  status: ProjectStatus;
-  category: ProjectCategory;
-  skillsNeeded: string[];
-  teamSize: { total: number };
-  createdAt: any;
-}
+export type { Project, ProjectStatus, ProjectCategory };
 
 export const projectService = {
   async getActiveProjects(): Promise<Project[]> {

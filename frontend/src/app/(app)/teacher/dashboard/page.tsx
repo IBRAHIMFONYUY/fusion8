@@ -3,12 +3,20 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Users, BookOpen, Activity, FileText, ArrowRight, Loader2, ShieldCheck, Clock, CheckCircle2, Edit3, Plus, UserCheck, Layout, BarChart } from 'lucide-react'
+import { Users, BookOpen, Activity, FileText, ArrowRight, Loader2, ShieldCheck, Clock, CheckCircle2, Edit3, Plus, UserCheck, Layout, BarChart, AlertCircle, Calendar, HeartHandshake, Sparkles, Video, TrendingUp } from 'lucide-react'
 import { collection, query, where, getDocs, doc, getDoc, orderBy } from 'firebase/firestore';
 import { firestore, errorEmitter, FirestorePermissionError } from '@/firebase';
 import { useAuth } from '@/firebase';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { format } from 'date-fns';
+
+function sessionStart(dateStr: any, time: string): Date {
+  const day = new Date(dateStr);
+  const [hours, minutes] = (time || '00:00').split(':').map(Number);
+  day.setHours(hours || 0, minutes || 0, 0, 0);
+  return day;
+}
 
 export default function TeacherDashboardPage() {
   const { user, isLoading: authLoading } = useAuth();
@@ -23,6 +31,10 @@ export default function TeacherDashboardPage() {
   const [matricule, setMatricule] = useState<string | null>(null);
   const [recentCourses, setRecentCourses] = useState<any[]>([]);
   const [mentees, setMentees] = useState<any[]>([]);
+  const [upcomingSessions, setUpcomingSessions] = useState<any[]>([]);
+  const [pendingReviewCount, setPendingReviewCount] = useState(0);
+  const [mentorSchedule, setMentorSchedule] = useState<any[]>([]);
+  const [avgCompletion, setAvgCompletion] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -87,6 +99,57 @@ export default function TeacherDashboardPage() {
             // permission or index may not be ready; ignore
         }
 
+        // Today's/upcoming practical sessions
+        try {
+            const broadcastSnap = await getDocs(
+                query(collection(firestore, 'broadcasts'), where('teacherId', '==', user.uid))
+            );
+            const allBroadcasts = broadcastSnap.docs.map((d) => ({ id: d.id, ...d.data() })) as any[];
+            const upcoming = allBroadcasts
+                .filter((b) => sessionStart(b.date, b.time).getTime() > Date.now() - 3 * 60 * 60 * 1000)
+                .sort((a, b) => sessionStart(a.date, a.time).getTime() - sessionStart(b.date, b.time).getTime())
+                .slice(0, 3);
+            setUpcomingSessions(upcoming);
+        } catch {
+            // ignore
+        }
+
+        // Ungraded submissions awaiting review
+        try {
+            const subSnap = await getDocs(
+                query(collection(firestore, 'submissions'), where('teacherId', '==', user.uid), where('status', '==', 'pending'))
+            );
+            setPendingReviewCount(subSnap.size);
+        } catch {
+            // ignore
+        }
+
+        // Upcoming mentoring sessions
+        try {
+            const sessionSnap = await getDocs(
+                query(collection(firestore, 'mentor_sessions'), where('mentorId', '==', user.uid), where('status', '==', 'scheduled'), orderBy('scheduledAt', 'asc'))
+            );
+            setMentorSchedule(sessionSnap.docs.slice(0, 2).map((d) => ({ id: d.id, ...d.data() })));
+        } catch {
+            // ignore
+        }
+
+        // Average completion across active enrollments in this teacher's courses
+        if (courses.length > 0) {
+            try {
+                const ids = courses.map((c: any) => c.id).slice(0, 30);
+                const enrollSnap = await getDocs(
+                    query(collection(firestore, 'enrollments'), where('courseId', 'in', ids), where('status', '==', 'active'))
+                );
+                const progresses = enrollSnap.docs.map((d) => d.data().progress || 0);
+                if (progresses.length > 0) {
+                    setAvgCompletion(Math.round(progresses.reduce((a, b) => a + b, 0) / progresses.length));
+                }
+            } catch {
+                // ignore
+            }
+        }
+
         // 3. Calculate pipeline metrics
         const published = courses.filter((c: any) => c.status === 'published').length;
         const pending = courses.filter((c: any) => c.status === 'pending').length;
@@ -120,8 +183,32 @@ export default function TeacherDashboardPage() {
     );
   }
 
+  // ── "What should I do next?" priority banner ──────────────────────────────
+  const nextSessionSoon = upcomingSessions[0]
+    && sessionStart(upcomingSessions[0].date, upcomingSessions[0].time).getTime() - Date.now() < 60 * 60 * 1000;
+
+  const priority: { icon: any; text: string; href?: string } = pendingReviewCount > 0
+    ? { icon: AlertCircle, text: `${pendingReviewCount} submission${pendingReviewCount !== 1 ? 's' : ''} awaiting review.`, href: '/teacher/gradebook' }
+    : nextSessionSoon
+    ? { icon: Video, text: `"${upcomingSessions[0].title}" starts within the hour.`, href: '/teacher/schedule' }
+    : { icon: Sparkles, text: 'All clear — no reviews pending.' };
+
   return (
     <div className="space-y-8 pb-12">
+      {/* ── Priority Banner ───────────────────────────────────────────── */}
+      {priority.href ? (
+        <Link href={priority.href} className="flex items-center gap-3 rounded-xl border border-accent/20 bg-accent/5 px-5 py-3.5 hover:bg-accent/10 transition-colors">
+          <priority.icon className="h-4.5 w-4.5 text-accent shrink-0" />
+          <p className="text-sm font-semibold flex-1">{priority.text}</p>
+          <ArrowRight className="h-4 w-4 text-accent shrink-0" />
+        </Link>
+      ) : (
+        <div className="flex items-center gap-3 rounded-xl border border-border bg-secondary/30 px-5 py-3.5">
+          <priority.icon className="h-4.5 w-4.5 text-muted-foreground shrink-0" />
+          <p className="text-sm font-semibold flex-1">{priority.text}</p>
+        </div>
+      )}
+
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 animate-slide-up-fade opacity-0 animation-delay-100">
         <div>
             <h1 className="text-4xl font-black tracking-tighter font-headline text-primary uppercase">Instructor Console</h1>
@@ -146,7 +233,7 @@ export default function TeacherDashboardPage() {
       </div>
 
       {/* KPI Stats */}
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 animate-slide-up-fade opacity-0 animation-delay-200">
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-5 animate-slide-up-fade opacity-0 animation-delay-200">
         <Card className="border-none shadow-xl bg-accent text-accent-foreground rounded-[2rem] overflow-hidden relative group transition-transform hover:scale-[1.02]">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 relative z-10">
             <CardTitle className="text-[10px] font-black uppercase tracking-widest opacity-80">Work In Progress</CardTitle>
@@ -191,6 +278,17 @@ export default function TeacherDashboardPage() {
           <CardContent>
             <div className="text-4xl font-black font-headline tracking-tighter">{stats.studentCount}</div>
             <p className="text-xs text-muted-foreground mt-1 font-bold uppercase">Active Students</p>
+          </CardContent>
+        </Card>
+
+        <Card className="border-none shadow-md bg-card/50 backdrop-blur-sm ring-1 ring-black/5 rounded-[2rem] transition-transform hover:scale-[1.02]">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Course Progress</CardTitle>
+            <TrendingUp className="h-5 w-5 text-green-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-4xl font-black font-headline tracking-tighter">{avgCompletion !== null ? `${avgCompletion}%` : '—'}</div>
+            <p className="text-xs text-muted-foreground mt-1 font-bold uppercase">Avg. Completion</p>
           </CardContent>
         </Card>
       </div>
@@ -346,6 +444,32 @@ export default function TeacherDashboardPage() {
                 </CardContent>
             </Card>
 
+            <Card className="border-none shadow-xl rounded-[2.5rem]">
+                <CardHeader className="pb-3">
+                    <CardTitle className="text-lg font-bold flex items-center gap-2">
+                        <HeartHandshake className="h-5 w-5 text-accent" />
+                        Mentoring Schedule
+                    </CardTitle>
+                    <CardDescription>Your next mentoring sessions.</CardDescription>
+                </CardHeader>
+                <CardContent className="pt-0">
+                    {mentorSchedule.length > 0 ? (
+                        <div className="space-y-2">
+                            {mentorSchedule.map((s) => (
+                                <div key={s.id} className="p-3 rounded-xl bg-secondary/40 border border-border/50">
+                                    <p className="font-semibold text-sm">{s.studentName || 'Student'}</p>
+                                    <p className="text-xs text-muted-foreground">
+                                        {s.scheduledAt ? format(new Date(s.scheduledAt), 'EEE, MMM d · h:mm a') : 'Scheduled'}
+                                    </p>
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <p className="text-sm text-muted-foreground italic py-4 text-center">No mentoring sessions scheduled.</p>
+                    )}
+                </CardContent>
+            </Card>
+
             <div className="space-y-4">
                 <h3 className="text-lg font-black font-headline tracking-tighter uppercase flex items-center gap-3">
                     <BarChart className="h-5 w-5 text-accent" />
@@ -355,10 +479,14 @@ export default function TeacherDashboardPage() {
                     <CardContent className="space-y-3 p-4">
                         <Link href="/teacher/schedule" className="p-5 bg-background rounded-[1.5rem] border border-border/50 flex justify-between items-center group hover:border-accent transition-all cursor-pointer">
                             <div className="flex items-center gap-4">
-                                <div className="p-3 bg-accent/10 rounded-2xl group-hover:scale-110 transition-transform"><Clock className="h-5 w-5 text-accent" /></div>
+                                <div className="p-3 bg-accent/10 rounded-2xl group-hover:scale-110 transition-transform"><Calendar className="h-5 w-5 text-accent" /></div>
                                 <div>
-                                    <p className="font-black text-xs uppercase tracking-widest">Lab Dispatch</p>
-                                    <p className="text-[10px] text-muted-foreground font-bold uppercase italic opacity-60">Schedule broadcast</p>
+                                    <p className="font-black text-xs uppercase tracking-widest">
+                                        {upcomingSessions.length > 0 ? `${upcomingSessions.length} Upcoming Session${upcomingSessions.length !== 1 ? 's' : ''}` : 'No Sessions Scheduled'}
+                                    </p>
+                                    <p className="text-[10px] text-muted-foreground font-bold uppercase italic opacity-60">
+                                        {upcomingSessions[0] ? `Next: ${upcomingSessions[0].title}` : 'Schedule a broadcast'}
+                                    </p>
                                 </div>
                             </div>
                             <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-accent group-hover:translate-x-1 transition-all" />
@@ -367,7 +495,9 @@ export default function TeacherDashboardPage() {
                             <div className="flex items-center gap-4">
                                 <div className="p-3 bg-primary/10 rounded-2xl group-hover:scale-110 transition-transform"><FileText className="h-5 w-5 text-primary" /></div>
                                 <div>
-                                    <p className="font-black text-xs uppercase tracking-widest">Academic Gradebook</p>
+                                    <p className="font-black text-xs uppercase tracking-widest">
+                                        {pendingReviewCount > 0 ? `${pendingReviewCount} Awaiting Review` : 'Gradebook Clear'}
+                                    </p>
                                     <p className="text-[10px] text-muted-foreground font-bold uppercase italic opacity-60">Review deliverables</p>
                                 </div>
                             </div>

@@ -11,7 +11,8 @@ import { Badge } from '@/components/ui/badge';
 import {
   BookOpen, CheckCircle, Flame, ClipboardList, ArrowRight,
   Loader2, Play, Calendar, FileText, Bell, Rocket, Trophy,
-  Clock, AlertCircle,
+  Clock, AlertCircle, HeartHandshake, FolderKanban, Award, Megaphone,
+  Sparkles,
 } from 'lucide-react';
 import { useAuth, useCollection, useMemoFirebase } from '@/firebase';
 import {
@@ -20,6 +21,16 @@ import {
 } from 'firebase/firestore';
 import type { Firestore } from 'firebase/firestore';
 import { deriveAchievements } from '@/types';
+import { format } from 'date-fns';
+
+const BROADCAST_PAST_CUTOFF_MS = 3 * 60 * 60 * 1000; // matches the check-in window
+
+function sessionStart(dateStr: any, time: string): Date {
+  const day = new Date(dateStr);
+  const [hours, minutes] = (time || '00:00').split(':').map(Number);
+  day.setHours(hours || 0, minutes || 0, 0, 0);
+  return day;
+}
 
 // ── Streak tracking ───────────────────────────────────────────────────────────
 async function updateAndGetStreak(db: Firestore, uid: string): Promise<number> {
@@ -151,15 +162,25 @@ export default function StudentDashboardPage() {
   }, [firestore, user]);
   const { data: enrollments, isLoading: enrollLoading } = useCollection(enrollmentsQuery);
 
-  // Broadcasts
-  const broadcastsQuery = useMemoFirebase(() => {
-    if (!firestore) return null;
-    return query(collection(firestore, 'broadcasts'), limit(3));
-  }, [firestore]);
-  const { data: broadcasts } = useCollection(broadcastsQuery);
-
-  // Assignments — filtered to courses the student is actually enrolled in
+  // Assignments/broadcasts — filtered to courses the student is actually enrolled in
   const enrolledCourseIds = enrollments?.map((e: any) => e.courseId) ?? [];
+
+  // Broadcasts — upcoming practical/live sessions for enrolled courses only
+  const broadcastsQuery = useMemoFirebase(() => {
+    if (!firestore || !enrolledCourseIds.length) return null;
+    const ids = enrolledCourseIds.slice(0, 30);
+    return query(
+      collection(firestore, 'broadcasts'),
+      where('courseId', 'in', ids),
+      orderBy('date', 'asc'),
+      limit(10)
+    );
+  }, [firestore, enrolledCourseIds.join(',')]);
+  const { data: allBroadcasts } = useCollection(broadcastsQuery);
+  const broadcasts = (allBroadcasts ?? [])
+    .filter((b: any) => sessionStart(b.date, b.time).getTime() > Date.now() - BROADCAST_PAST_CUTOFF_MS)
+    .slice(0, 3);
+
   const assignmentsQuery = useMemoFirebase(() => {
     if (!firestore || !user || !enrolledCourseIds.length) return null;
     // Firestore 'in' supports up to 30 values
@@ -182,6 +203,39 @@ export default function StudentDashboardPage() {
     );
   }, [firestore, user]);
   const { data: myProjects } = useCollection(projectsQuery);
+
+  // Next scheduled mentor session
+  const mentorSessionsQuery = useMemoFirebase(() => {
+    if (!firestore || !user) return null;
+    return query(
+      collection(firestore, 'mentor_sessions'),
+      where('studentId', '==', user.uid),
+      where('status', '==', 'scheduled'),
+      orderBy('scheduledAt', 'asc'),
+      limit(1)
+    );
+  }, [firestore, user]);
+  const { data: mentorSessions } = useCollection(mentorSessionsQuery);
+  const nextMentorSession = mentorSessions?.[0];
+
+  // Certificates earned
+  const certificatesQuery = useMemoFirebase(() => {
+    if (!firestore || !user) return null;
+    return query(collection(firestore, 'certificates'), where('studentId', '==', user.uid));
+  }, [firestore, user]);
+  const { data: certificates } = useCollection(certificatesQuery);
+
+  // Announcements — same query as /student/notifications, latest few only
+  const announcementsQuery = useMemoFirebase(() => {
+    if (!firestore || !user) return null;
+    return query(
+      collection(firestore, 'notifications'),
+      where('userId', '==', user.uid),
+      orderBy('createdAt', 'desc'),
+      limit(3)
+    );
+  }, [firestore, user]);
+  const { data: announcements } = useCollection(announcementsQuery);
 
   // Streak tracking — update on mount
   useEffect(() => {
@@ -238,6 +292,24 @@ export default function StudentDashboardPage() {
     ?? activeCourses.find(c => c.progress < 100)
     ?? activeCourses[0];
 
+  // ── "What should I do next?" priority banner ──────────────────────────────
+  const overdueAssignment = pendingAssignments.find((a: any) => dueDateUrgency(a.dueDate) === 'overdue');
+  const dueSoonAssignment = pendingAssignments.find((a: any) => dueDateUrgency(a.dueDate) === 'soon');
+  const mentorSessionSoon = nextMentorSession?.scheduledAt
+    && new Date(nextMentorSession.scheduledAt).getTime() - Date.now() < 24 * 60 * 60 * 1000;
+  const nextBroadcastSoon = broadcasts[0]
+    && sessionStart(broadcasts[0].date, broadcasts[0].time).getTime() - Date.now() < 3 * 60 * 60 * 1000;
+
+  const priority: { icon: any; text: string; href?: string } = overdueAssignment
+    ? { icon: AlertCircle, text: `"${overdueAssignment.title}" is overdue — submit it now.`, href: '/student/assignments' }
+    : mentorSessionSoon
+    ? { icon: HeartHandshake, text: 'Your mentor session is coming up soon.' }
+    : dueSoonAssignment
+    ? { icon: Clock, text: `"${dueSoonAssignment.title}" is due soon.`, href: '/student/assignments' }
+    : nextBroadcastSoon
+    ? { icon: Calendar, text: `"${broadcasts[0].title}" starts soon — check in from Live Sessions.`, href: '/student/live' }
+    : { icon: Sparkles, text: "You're all caught up. Nice work!" };
+
   const firstName = user?.displayName?.split(' ')[0] || 'Engineer';
   const hour = new Date().getHours();
   const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
@@ -292,6 +364,20 @@ export default function StudentDashboardPage() {
         </div>
         <div className="absolute top-0 right-0 w-64 h-64 bg-accent/8 rounded-full -mr-16 -mt-16 blur-3xl pointer-events-none" />
       </div>
+
+      {/* ── Priority Banner: "What should I do next?" ──────────────────── */}
+      {priority.href ? (
+        <NextLink href={priority.href} className="flex items-center gap-3 rounded-xl border border-accent/20 bg-accent/5 px-5 py-3.5 hover:bg-accent/10 transition-colors">
+          <priority.icon className="h-4.5 w-4.5 text-accent shrink-0" />
+          <p className="text-sm font-semibold flex-1">{priority.text}</p>
+          <ArrowRight className="h-4 w-4 text-accent shrink-0" />
+        </NextLink>
+      ) : (
+        <div className="flex items-center gap-3 rounded-xl border border-border bg-secondary/30 px-5 py-3.5">
+          <priority.icon className="h-4.5 w-4.5 text-muted-foreground shrink-0" />
+          <p className="text-sm font-semibold flex-1">{priority.text}</p>
+        </div>
+      )}
 
       {/* ── KPI Cards (real data only) ────────────────────────────────── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -419,10 +505,44 @@ export default function StudentDashboardPage() {
             )}
           </div>
 
+          {/* Current Project */}
+          {myProjects && myProjects.length > 0 && (
+            <div>
+              <h2 className="text-lg font-bold font-headline mb-4">Current Project</h2>
+              <div className="grid gap-3 sm:grid-cols-2">
+                {myProjects.slice(0, 2).map((p: any) => (
+                  <NextLink key={p.id} href="/student/projects">
+                    <Card className="border border-border hover:border-accent/30 hover:shadow-md transition-all rounded-2xl h-full">
+                      <CardContent className="p-4 flex items-start gap-3">
+                        <div className="w-9 h-9 rounded-lg bg-accent/10 flex items-center justify-center shrink-0">
+                          <FolderKanban className="h-4.5 w-4.5 text-accent" />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="font-semibold text-sm line-clamp-1">{p.title}</p>
+                          <Badge variant="outline" className="mt-1 text-[10px] capitalize">{p.status?.replace('_', ' ')}</Badge>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </NextLink>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Achievements */}
           {achievements.length > 0 && (
             <div>
-              <h2 className="text-lg font-bold font-headline mb-4">Your Achievements</h2>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-bold font-headline">Your Achievements</h2>
+                {certificates && certificates.length > 0 && (
+                  <NextLink
+                    href="/student/profile"
+                    className="flex items-center gap-1.5 text-xs font-semibold text-accent hover:underline"
+                  >
+                    <Award className="h-3.5 w-3.5" /> {certificates.length} certificate{certificates.length !== 1 ? 's' : ''} earned
+                  </NextLink>
+                )}
+              </div>
               <div className="flex flex-wrap gap-2">
                 {achievements.map((a) => (
                   <div
@@ -474,14 +594,14 @@ export default function StudentDashboardPage() {
                           </Badge>
                         </div>
                         <p className="text-[10px] text-white/60 font-medium uppercase tracking-wider">
-                          Bamenda Lab 01 · Live
+                          {format(new Date(b.date), 'EEEE, MMM d')} · {b.teacherName || 'Fusion8 Lab'}
                         </p>
                       </div>
                     ))}
                   </div>
                 ) : (
                   <div className="p-6 text-center text-sm text-white/60">
-                    No labs scheduled today.
+                    No upcoming labs scheduled.
                   </div>
                 )}
                 <Button
@@ -556,6 +676,60 @@ export default function StudentDashboardPage() {
                 >
                   <NextLink href="/student/assignments">
                     View All Assignments <ArrowRight className="ml-1 h-3 w-3" />
+                  </NextLink>
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Mentor Session */}
+          <div>
+            <h3 className="text-base font-bold font-headline flex items-center gap-2 mb-3">
+              <HeartHandshake className="h-4 w-4 text-primary" />
+              Mentor Session
+            </h3>
+            <Card className="border border-border bg-secondary/30 rounded-2xl">
+              <CardContent className="p-4">
+                {nextMentorSession ? (
+                  <div>
+                    <p className="font-medium text-sm">
+                      {nextMentorSession.scheduledAt
+                        ? format(new Date(nextMentorSession.scheduledAt), 'EEEE, MMM d · h:mm a')
+                        : 'Scheduled'}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1 capitalize">
+                      {(nextMentorSession.type || 'office_hours').replace('_', ' ')}
+                    </p>
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground py-2">
+                    No sessions scheduled yet. Your mentor will book one with you.
+                  </p>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Announcements */}
+          <div>
+            <h3 className="text-base font-bold font-headline flex items-center gap-2 mb-3">
+              <Megaphone className="h-4 w-4 text-primary" />
+              Announcements
+            </h3>
+            <Card className="border border-border bg-secondary/30 rounded-2xl">
+              <CardContent className="p-4 space-y-2">
+                {announcements && announcements.length > 0 ? (
+                  announcements.map((n: any) => (
+                    <div key={n.id} className="p-3 bg-background rounded-xl border border-border">
+                      <p className="text-sm leading-snug line-clamp-2">{n.message}</p>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-sm text-muted-foreground py-2 text-center">Nothing new.</p>
+                )}
+                <Button asChild variant="ghost" size="sm" className="w-full h-9 text-xs font-semibold text-accent hover:text-accent">
+                  <NextLink href="/student/notifications">
+                    View All <ArrowRight className="ml-1 h-3 w-3" />
                   </NextLink>
                 </Button>
               </CardContent>
