@@ -33,6 +33,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 
+import { sendEmail } from '@/services/email-service';
+
 export default function AdminUsersPage() {
     const { role, user: currentUser } = useAuth();
     const { toast } = useToast();
@@ -73,6 +75,8 @@ export default function AdminUsersPage() {
             setLoading(false);
         }
     }, [userList, appList, cohortList, newsList, usersLoading, appsLoading, cohortLoading, newsLoading]);
+
+    
 
     const handleDownloadCSV = () => {
         if (cohortApps.length === 0) {
@@ -170,6 +174,15 @@ export default function AdminUsersPage() {
         const result = await approveTeacher({ teacherUid: uid, applicationId: appId, email });
         if (result.success) {
             toast({ title: "Approved", description: `${email} now has full lecturer access.` });
+            sendEmail({
+                to: email,
+                template: 'teacher_approved',   
+                data: {
+                    sender: 'Fusion8',
+                    message: 'Congratulations! Your teacher application has been approved. You now have full lecturer access.'
+                }
+            });
+            
         } else {
             toast({ variant: 'destructive', title: "Approval Failed", description: result.error });
         }

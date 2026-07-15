@@ -197,6 +197,18 @@ export async function submitTeacherApplication(
       appliedAt: FieldValue.serverTimestamp(),
     });
 
+    await adminDb.collection('users').add({
+      role: 'teacher',
+      id: userId,
+      email: email,
+      displayName: fullName,
+      createdAt: FieldValue.serverTimestamp(),
+      lastLogin: FieldValue.serverTimestamp(),
+      accountType: 'email',
+      onboardingCompleted: false,
+      approved: false,
+      
+    });
     return { success: true };
   } catch (error: any) {
     console.error('[submitTeacherApplication] Error:', error.message);

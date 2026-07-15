@@ -166,6 +166,7 @@ export async function adminCreateUser(params: {
  */
 export async function approveTeacher(params: {
   teacherUid: string;
+  
   applicationId?: string;
   email?: string;
 }): Promise<{ success: boolean; error?: string }> {
@@ -182,10 +183,10 @@ export async function approveTeacher(params: {
   try {
     const batch = adminDb.batch();
 
-    batch.update(adminDb.collection('users').doc(teacherUid), {
-      approved: true,
-      approvedAt: FieldValue.serverTimestamp(),
-    });
+    // batch.update(adminDb.collection('users').doc(userId), {
+    //   approved: true,
+    //   approvedAt: FieldValue.serverTimestamp(),
+    // });
 
     batch.set(
       adminDb.collection('approved_teachers').doc(teacherUid),

@@ -11,8 +11,7 @@ const FROM_NAME = 'Fusion8';
 // They require the x-internal-secret header — NOT a body flag, which any
 // unauthenticated client could forge.
 const SYSTEM_ONLY_TEMPLATES: EmailTemplate[] = [
-  'teacher_approved',
-  'teacher_rejected',
+  
   'password_reset',
   'enrollment_confirmed',
   'live_session_reminder',
