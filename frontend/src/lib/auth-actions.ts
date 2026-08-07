@@ -83,7 +83,7 @@ export async function verifySession(): Promise<{
  */
 export async function adminCreateUser(params: {
   email: string;
-  password: string;
+  password?: string;
   displayName: string;
   role: 'student' | 'teacher' | 'admin';
 }): Promise<{ success: boolean; uid?: string; error?: string }> {
@@ -105,7 +105,7 @@ export async function adminCreateUser(params: {
 
     const userRecord = await adminAuth.createUser({
       email: normalizedEmail,
-      password,
+      password: password || Math.random().toString(36).slice(-8), // Temporary password if not provided
       displayName,
       emailVerified: false,
     });
@@ -138,12 +138,13 @@ export async function adminCreateUser(params: {
         updatedAt: FieldValue.serverTimestamp(),
       });
     } else if (finalRole === 'teacher') {
-      await adminDb.collection('teacher_applications').doc(userRecord.uid).set({
-        uid: userRecord.uid,
-        name: displayName,
-        email: normalizedEmail,
-        status: 'pending',
-        appliedAt: FieldValue.serverTimestamp(),
+      // Auto-approve teachers created by admin
+      await adminDb.collection('approved_teachers').doc(userRecord.uid).set({
+        active: true,
+        approvedAt: FieldValue.serverTimestamp(),
+      });
+      await adminDb.collection('approved_teacher_emails').doc(normalizedEmail).set({
+        approvedAt: FieldValue.serverTimestamp(),
       });
     }
 
@@ -156,8 +157,9 @@ export async function adminCreateUser(params: {
 
 /**
  * Approve a teacher account.
+ * Creates Firebase Auth user with password and writes security markers.
  * Writes four documents atomically:
- *   1. users/{uid}.approved = true
+ *   1. users/{uid} (creates user profile if doesn't exist)
  *   2. approved_teachers/{uid} (security marker for Firestore rules)
  *   3. teacher_applications/{applicationId}.status = 'approved'
  *   4. approved_teacher_emails/{email} (email whitelist for future registrations)
@@ -166,10 +168,11 @@ export async function adminCreateUser(params: {
  */
 export async function approveTeacher(params: {
   teacherUid: string;
-  
   applicationId?: string;
-  email?: string;
-}): Promise<{ success: boolean; error?: string }> {
+  email: string;
+  displayName: string;
+  password: string;
+}): Promise<{ success: boolean; uid?: string; error?: string }> {
   const session = await verifySession();
   if (!session) {
     return { success: false, error: 'Unauthorized.' };
@@ -179,37 +182,68 @@ export async function approveTeacher(params: {
     return { success: false, error: 'Admin privileges required.' };
   }
 
-  const { teacherUid, applicationId, email } = params;
+  const { teacherUid, applicationId, email, displayName, password } = params;
   try {
+    const normalizedEmail = email.toLowerCase().trim();
+
+    // Create Firebase Auth user if doesn't exist
+    let userRecord;
+    try {
+      userRecord = await adminAuth.createUser({
+        email: normalizedEmail,
+        password,
+        displayName,
+        emailVerified: true, // Auto-verify since admin is creating
+      });
+    } catch (error: any) {
+      // User might already exist, try to get them
+      if (error.code === 'auth/email-already-exists') {
+        userRecord = await adminAuth.getUserByEmail(normalizedEmail);
+      } else {
+        throw error;
+      }
+    }
+
     const batch = adminDb.batch();
 
-    // batch.update(adminDb.collection('users').doc(userId), {
-    //   approved: true,
-    //   approvedAt: FieldValue.serverTimestamp(),
-    // });
+    // Create or update user profile
+    const userRef = adminDb.collection('users').doc(userRecord.uid);
+    batch.set(userRef, {
+      id: userRecord.uid,
+      email: normalizedEmail,
+      displayName,
+      role: 'teacher',
+      approved: true,
+      createdAt: FieldValue.serverTimestamp(),
+      lastLogin: FieldValue.serverTimestamp(),
+      accountType: 'email',
+      onboardingCompleted: false,
+      photoURL: `https://api.dicebear.com/7.x/avataaars/svg?seed=${userRecord.uid}`,
+    }, { merge: true });
 
+    // Set security marker
     batch.set(
-      adminDb.collection('approved_teachers').doc(teacherUid),
+      adminDb.collection('approved_teachers').doc(userRecord.uid),
       { active: true, approvedAt: FieldValue.serverTimestamp() },
       { merge: true }
     );
 
+    // Update application status
     const appDocId = applicationId ?? teacherUid;
     batch.update(adminDb.collection('teacher_applications').doc(appDocId), {
       status: 'approved',
       reviewedAt: FieldValue.serverTimestamp(),
     });
 
-    if (email) {
-      batch.set(
-        adminDb.collection('approved_teacher_emails').doc(email.toLowerCase()),
-        { approvedAt: FieldValue.serverTimestamp() },
-        { merge: true }
-      );
-    }
+    // Add to email whitelist
+    batch.set(
+      adminDb.collection('approved_teacher_emails').doc(normalizedEmail),
+      { approvedAt: FieldValue.serverTimestamp() },
+      { merge: true }
+    );
 
     await batch.commit();
-    return { success: true };
+    return { success: true, uid: userRecord.uid };
   } catch (error: any) {
     console.error('[approveTeacher] Error:', error.message);
     return { success: false, error: error.message };
@@ -313,6 +347,116 @@ export async function adminRevokeUserSessions(
     return { success: true };
   } catch (error: any) {
     console.error('[adminRevokeUserSessions] Error:', error.message);
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Update a user's profile (admin only).
+ */
+export async function adminUpdateUser(params: {
+  uid: string;
+  displayName?: string;
+  email?: string;
+  role?: 'student' | 'teacher' | 'admin';
+  approved?: boolean;
+  mentorId?: string | null;
+  mentorName?: string | null;
+}): Promise<{ success: boolean; error?: string }> {
+  const session = await verifySession();
+  if (!session) {
+    return { success: false, error: 'Unauthorized.' };
+  }
+  const callerAdmin = await adminDb.collection('roles_admin').doc(session.uid).get();
+  if (!callerAdmin.exists) {
+    return { success: false, error: 'Admin privileges required.' };
+  }
+
+  try {
+    const { uid, displayName, email, role, approved, mentorId, mentorName } = params;
+    const updates: Record<string, any> = {};
+
+    if (displayName !== undefined) updates.displayName = displayName;
+    if (email !== undefined) updates.email = email.toLowerCase().trim();
+    if (role !== undefined) updates.role = role;
+    if (approved !== undefined) updates.approved = approved;
+    if (mentorId !== undefined) updates.mentorId = mentorId;
+    if (mentorName !== undefined) updates.mentorName = mentorName;
+
+    await adminDb.collection('users').doc(uid).update(updates);
+
+    // Handle role changes
+    if (role === 'admin') {
+      await adminDb.collection('roles_admin').doc(uid).set({
+        active: true,
+        updatedAt: FieldValue.serverTimestamp(),
+      }, { merge: true });
+    } else if (role === 'teacher' && approved) {
+      await adminDb.collection('approved_teachers').doc(uid).set({
+        active: true,
+        approvedAt: FieldValue.serverTimestamp(),
+      }, { merge: true });
+    }
+
+    return { success: true };
+  } catch (error: any) {
+    console.error('[adminUpdateUser] Error:', error.message);
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Delete a user account (admin only).
+ */
+export async function adminDeleteUser(
+  uid: string
+): Promise<{ success: boolean; error?: string }> {
+  const session = await verifySession();
+  if (!session) {
+    return { success: false, error: 'Unauthorized.' };
+  }
+  const callerAdmin = await adminDb.collection('roles_admin').doc(session.uid).get();
+  if (!callerAdmin.exists) {
+    return { success: false, error: 'Admin privileges required.' };
+  }
+
+  try {
+    // Delete from Firebase Auth
+    await adminAuth.deleteUser(uid);
+
+    // Delete from Firestore
+    await adminDb.collection('users').doc(uid).delete();
+    await adminDb.collection('roles_admin').doc(uid).delete();
+    await adminDb.collection('approved_teachers').doc(uid).delete();
+
+    return { success: true };
+  } catch (error: any) {
+    console.error('[adminDeleteUser] Error:', error.message);
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Generate a password reset link for a user (admin only).
+ * Used to send setup emails to new teachers.
+ */
+export async function adminGeneratePasswordResetLink(
+  email: string
+): Promise<{ success: boolean; link?: string; error?: string }> {
+  const session = await verifySession();
+  if (!session) {
+    return { success: false, error: 'Unauthorized.' };
+  }
+  const callerAdmin = await adminDb.collection('roles_admin').doc(session.uid).get();
+  if (!callerAdmin.exists) {
+    return { success: false, error: 'Admin privileges required.' };
+  }
+
+  try {
+    const link = await adminAuth.generatePasswordResetLink(email);
+    return { success: true, link };
+  } catch (error: any) {
+    console.error('[adminGeneratePasswordResetLink] Error:', error.message);
     return { success: false, error: error.message };
   }
 }

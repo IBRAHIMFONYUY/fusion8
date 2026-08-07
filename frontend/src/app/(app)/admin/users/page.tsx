@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { collection, query, doc, updateDoc, addDoc, serverTimestamp, deleteDoc, getDocs, writeBatch, orderBy } from 'firebase/firestore';
 import { firestore, useAuth, useCollection, useMemoFirebase } from '@/firebase';
-import { approveTeacher, rejectTeacher } from '@/lib/auth-actions';
+import { approveTeacher, rejectTeacher, adminCreateUser, adminUpdateUser, adminDeleteUser, adminGeneratePasswordResetLink } from '@/lib/auth-actions';
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -24,7 +24,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { Check, X, Users as UsersIcon, Loader2, Trash2, GraduationCap, FileText, Newspaper, FileSpreadsheet, BellRing, Download } from 'lucide-react';
+import { Check, X, Users as UsersIcon, Loader2, Trash2, GraduationCap, FileText, Newspaper, FileSpreadsheet, BellRing, Download, Plus, Edit, Mail } from 'lucide-react';
 import { MentorAssignCell } from '@/components/mentor-assign-cell';
 import { useToast } from '@/hooks/use-toast';
 import { EmptyState } from '@/components/ui/empty-state';
@@ -65,6 +65,22 @@ export default function AdminUsersPage() {
     
     const [notifyForm, setNotifyForm] = useState({ title: '', message: '' });
     const [isBroadcasting, setIsBroadcasting] = useState(false);
+
+    // User Management States
+    const [showCreateUserDialog, setShowCreateUserDialog] = useState(false);
+    const [showEditUserDialog, setShowEditUserDialog] = useState(false);
+    const [showApproveTeacherDialog, setShowApproveTeacherDialog] = useState(false);
+    const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
+    const [selectedApplication, setSelectedApplication] = useState<any>(null);
+    const [userForm, setUserForm] = useState({
+        displayName: '',
+        email: '',
+        role: 'student' as 'student' | 'teacher' | 'admin',
+        password: '',
+    });
+    const [isCreatingUser, setIsCreatingUser] = useState(false);
+    const [isUpdatingUser, setIsUpdatingUser] = useState(false);
+    const [isApprovingTeacher, setIsApprovingTeacher] = useState(false);
 
     useEffect(() => {
         if (!usersLoading && !appsLoading && !cohortLoading && !newsLoading) {
@@ -165,27 +181,46 @@ export default function AdminUsersPage() {
         }
     };
 
-    const handleApproveTeacher = async (appId: string, email: string, teacherUid?: string) => {
-        // Must call the server action — it atomically writes:
-        // users/{uid}.approved, approved_teachers/{uid}, teacher_applications/{id}.status,
-        // and approved_teacher_emails/{email}. Client-only writes missed the first two,
-        // leaving approved teachers permanently stuck on the vetting screen.
+    const handleApproveTeacher = async (appId: string, email: string, displayName: string, password: string, teacherUid?: string) => {
+        // Must call the server action — it atomically creates the Firebase Auth user,
+        // writes users/{uid}, approved_teachers/{uid}, teacher_applications/{id}.status,
+        // and approved_teacher_emails/{email}.
         const uid = teacherUid ?? appId;
-        const result = await approveTeacher({ teacherUid: uid, applicationId: appId, email });
+        const result = await approveTeacher({ 
+            teacherUid: uid, 
+            applicationId: appId, 
+            email, 
+            displayName,
+            password 
+        });
         if (result.success) {
             toast({ title: "Approved", description: `${email} now has full lecturer access.` });
             sendEmail({
                 to: email,
                 template: 'teacher_approved',   
                 data: {
-                    sender: 'Fusion8',
-                    message: 'Congratulations! Your teacher application has been approved. You now have full lecturer access.'
+                    name: displayName,
+                    email,
+                    password,
                 }
             });
-            
+            setShowApproveTeacherDialog(false);
+            setSelectedApplication(null);
+            setUserForm({ displayName: '', email: '', role: 'student', password: '' });
         } else {
             toast({ variant: 'destructive', title: "Approval Failed", description: result.error });
         }
+    };
+
+    const openApproveDialog = (application: any) => {
+        setSelectedApplication(application);
+        setUserForm({
+            displayName: application.name || application.fullName || '',
+            email: application.email || '',
+            role: 'teacher',
+            password: '',
+        });
+        setShowApproveTeacherDialog(true);
     };
 
     const handleRejectTeacher = async (appId: string, teacherUid?: string) => {
@@ -248,6 +283,118 @@ export default function AdminUsersPage() {
         finally { setIsBroadcasting(false); }
     };
 
+    // User CRUD Handlers
+    const handleCreateUser = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setIsCreatingUser(true);
+        try {
+            const result = await adminCreateUser({
+                displayName: userForm.displayName,
+                email: userForm.email,
+                role: userForm.role,
+                password: userForm.password || undefined,
+            });
+            if (result.success) {
+                toast({ title: "User Created", description: `${userForm.displayName} has been added as ${userForm.role}.` });
+                setShowCreateUserDialog(false);
+                setUserForm({ displayName: '', email: '', role: 'student', password: '' });
+                
+                // If teacher, send password setup email
+                if (userForm.role === 'teacher') {
+                    const linkResult = await adminGeneratePasswordResetLink(userForm.email);
+                    if (linkResult.success && linkResult.link) {
+                        await sendEmail({
+                            to: userForm.email,
+                            template: 'teacher_setup',
+                            data: {
+                                displayName: userForm.displayName,
+                                setupLink: linkResult.link,
+                            }
+                        });
+                        toast({ title: "Setup Email Sent", description: "Password setup instructions sent to teacher." });
+                    }
+                }
+            } else {
+                toast({ variant: 'destructive', title: "Creation Failed", description: result.error });
+            }
+        } catch (error: any) {
+            toast({ variant: 'destructive', title: "Creation Failed", description: error.message });
+        } finally {
+            setIsCreatingUser(false);
+        }
+    };
+
+    const handleEditUser = (user: UserProfile) => {
+        setSelectedUser(user);
+        setUserForm({
+            displayName: user.displayName || '',
+            email: user.email || '',
+            role: user.role,
+            password: '',
+        });
+        setShowEditUserDialog(true);
+    };
+
+    const handleUpdateUser = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!selectedUser) return;
+        setIsUpdatingUser(true);
+        try {
+            const result = await adminUpdateUser({
+                uid: selectedUser.id,
+                displayName: userForm.displayName,
+                email: userForm.email,
+                role: userForm.role,
+            });
+            if (result.success) {
+                toast({ title: "User Updated", description: `${userForm.displayName}'s profile has been updated.` });
+                setShowEditUserDialog(false);
+                setSelectedUser(null);
+                setUserForm({ displayName: '', email: '', role: 'student', password: '' });
+            } else {
+                toast({ variant: 'destructive', title: "Update Failed", description: result.error });
+            }
+        } catch (error: any) {
+            toast({ variant: 'destructive', title: "Update Failed", description: error.message });
+        } finally {
+            setIsUpdatingUser(false);
+        }
+    };
+
+    const handleDeleteUser = async (uid: string, displayName: string) => {
+        try {
+            const result = await adminDeleteUser(uid);
+            if (result.success) {
+                toast({ title: "User Deleted", description: `${displayName} has been removed from the platform.` });
+            } else {
+                toast({ variant: 'destructive', title: "Deletion Failed", description: result.error });
+            }
+        } catch (error: any) {
+            toast({ variant: 'destructive', title: "Deletion Failed", description: error.message });
+        }
+    };
+
+    const handleSendPasswordReset = async (email: string, displayName: string) => {
+        try {
+            const result = await adminGeneratePasswordResetLink(email);
+            if (result.success && result.link) {
+                await sendEmail({
+                    to: email,
+                    template: 'password_reset',
+                    data: {
+                        displayName,
+                        resetLink: result.link,
+                    }
+                });
+                toast({ title: "Reset Email Sent", description: `Password reset instructions sent to ${email}.` });
+            } else {
+                toast({ variant: 'destructive', title: "Failed", description: result.error });
+            }
+        } catch (error: any) {
+            toast({ variant: 'destructive', title: "Failed", description: error.message });
+        }
+    };
+
     if (loading) {
         return (
             <div className="flex flex-col items-center justify-center p-24">
@@ -275,29 +422,34 @@ export default function AdminUsersPage() {
             <h1 className="text-2xl font-bold font-headline mb-1">Central Console</h1>
             <p className="text-muted-foreground text-sm">Organize students, review applications, publish news, and manage platform staff.</p>
         </div>
-        {/* Destructive full-platform wipe — hidden by default for launch.
-            Set NEXT_PUBLIC_ENABLE_PLATFORM_WIPE=true locally if you need it
-            for a staging reset; there is no confirmation-typing/re-auth step
-            behind this, so keep it off in any environment with real user data. */}
-        {process.env.NEXT_PUBLIC_ENABLE_PLATFORM_WIPE === 'true' && (
-          <AlertDialog>
-              <AlertDialogTrigger asChild>
-                  <Button variant="destructive" size="sm" className="font-bold">
-                      <Trash2 className="mr-2 h-4 w-4" /> Reset Platform Data
-                  </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                  <AlertDialogHeader>
-                      <AlertDialogTitle>Total Purge Confirmation</AlertDialogTitle>
-                      <AlertDialogDescription>This will delete absolutely ALL generated data (users, courses, applications, logs).</AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                      <AlertDialogCancel>Abort</AlertDialogCancel>
-                      <AlertDialogAction onClick={handlePlatformWipe} className="bg-destructive hover:bg-destructive/90">Confirm Purge</AlertDialogAction>
-                  </AlertDialogFooter>
-              </AlertDialogContent>
-          </AlertDialog>
-        )}
+        <div className="flex gap-2">
+            <Button onClick={() => setShowCreateUserDialog(true)} className="font-bold">
+                <Plus className="mr-2 h-4 w-4" /> Create User
+            </Button>
+            {/* Destructive full-platform wipe — hidden by default for launch.
+                Set NEXT_PUBLIC_ENABLE_PLATFORM_WIPE=true locally if you need it
+                for a staging reset; there is no confirmation-typing/re-auth step
+                behind this, so keep it off in any environment with real user data. */}
+            {process.env.NEXT_PUBLIC_ENABLE_PLATFORM_WIPE === 'true' && (
+              <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                      <Button variant="destructive" size="sm" className="font-bold">
+                          <Trash2 className="mr-2 h-4 w-4" /> Reset Platform Data
+                      </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                      <AlertDialogHeader>
+                          <AlertDialogTitle>Total Purge Confirmation</AlertDialogTitle>
+                          <AlertDialogDescription>This will delete absolutely ALL generated data (users, courses, applications, logs).</AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                          <AlertDialogCancel>Abort</AlertDialogCancel>
+                          <AlertDialogAction onClick={handlePlatformWipe} className="bg-destructive hover:bg-destructive/90">Confirm Purge</AlertDialogAction>
+                      </AlertDialogFooter>
+                  </AlertDialogContent>
+              </AlertDialog>
+            )}
+        </div>
       </div>
 
       <Tabs defaultValue="students" className="w-full">
@@ -493,6 +645,7 @@ export default function AdminUsersPage() {
                                         <TableHead className="px-6 py-4">Name</TableHead>
                                         <TableHead>Role</TableHead>
                                         <TableHead>System ID</TableHead>
+                                        <TableHead className="text-right">Actions</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
@@ -507,6 +660,33 @@ export default function AdminUsersPage() {
                                         </TableCell>
                                         <TableCell>
                                             <span className="font-mono text-[10px] text-muted-foreground">{user.id}</span>
+                                        </TableCell>
+                                        <TableCell className="text-right">
+                                            <div className="flex gap-2 justify-end">
+                                                <Button variant="ghost" size="icon" onClick={() => handleEditUser(user)}>
+                                                    <Edit className="h-4 w-4" />
+                                                </Button>
+                                                <Button variant="ghost" size="icon" onClick={() => handleSendPasswordReset(user.email, user.displayName)}>
+                                                    <Mail className="h-4 w-4" />
+                                                </Button>
+                                                <AlertDialog>
+                                                    <AlertDialogTrigger asChild>
+                                                        <Button variant="ghost" size="icon" className="text-destructive hover:bg-destructive/10">
+                                                            <Trash2 className="h-4 w-4" />
+                                                        </Button>
+                                                    </AlertDialogTrigger>
+                                                    <AlertDialogContent>
+                                                        <AlertDialogHeader>
+                                                            <AlertDialogTitle>Delete User</AlertDialogTitle>
+                                                            <AlertDialogDescription>Are you sure you want to delete {user.displayName}? This action cannot be undone.</AlertDialogDescription>
+                                                        </AlertDialogHeader>
+                                                        <AlertDialogFooter>
+                                                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                            <AlertDialogAction onClick={() => handleDeleteUser(user.id, user.displayName)} className="bg-destructive hover:bg-destructive/90">Delete</AlertDialogAction>
+                                                        </AlertDialogFooter>
+                                                    </AlertDialogContent>
+                                                </AlertDialog>
+                                            </div>
                                         </TableCell>
                                     </TableRow>
                                     ))}
@@ -588,7 +768,7 @@ export default function AdminUsersPage() {
                                 <TableCell className="text-right px-6 align-top pt-4">
                                     {app.status === 'pending' && (
                                         <div className="flex gap-2 justify-end">
-                                            <Button variant="outline" size="sm" className="text-green-600 border-green-200 hover:bg-green-50" onClick={() => handleApproveTeacher(app.id, app.email, app.uid ?? app.userId)}>
+                                            <Button variant="outline" size="sm" className="text-green-600 border-green-200 hover:bg-green-50" onClick={() => openApproveDialog(app)}>
                                                 <Check className="h-4 w-4 mr-1" /> Approve
                                             </Button>
                                             <Button variant="outline" size="sm" className="text-red-600 border-red-200 hover:bg-red-50" onClick={() => handleRejectTeacher(app.id, app.uid ?? app.userId)}>
@@ -675,6 +855,185 @@ export default function AdminUsersPage() {
         </TabsContent>
 
       </Tabs>
+
+      {/* Create User Dialog */}
+      <Dialog open={showCreateUserDialog} onOpenChange={setShowCreateUserDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="font-headline text-xl uppercase tracking-tighter">Create New User</DialogTitle>
+            <DialogDescription>Add a new student or teacher to the platform.</DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleCreateUser} className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="displayName">Full Name</Label>
+              <Input
+                id="displayName"
+                value={userForm.displayName}
+                onChange={(e) => setUserForm({ ...userForm, displayName: e.target.value })}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                value={userForm.email}
+                onChange={(e) => setUserForm({ ...userForm, email: e.target.value })}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="role">Role</Label>
+              <select
+                id="role"
+                value={userForm.role}
+                onChange={(e) => setUserForm({ ...userForm, role: e.target.value as 'student' | 'teacher' | 'admin' })}
+                className="flex h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                <option value="student">Student</option>
+                <option value="teacher">Teacher</option>
+                <option value="admin">Admin</option>
+              </select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="password">Password (optional - will be sent via email for teachers)</Label>
+              <Input
+                id="password"
+                type="password"
+                value={userForm.password}
+                onChange={(e) => setUserForm({ ...userForm, password: e.target.value })}
+                placeholder="Leave blank for auto-generated password"
+              />
+            </div>
+            <div className="flex gap-2 pt-2">
+              <Button type="button" variant="outline" onClick={() => setShowCreateUserDialog(false)} className="flex-1">
+                Cancel
+              </Button>
+              <Button type="submit" disabled={isCreatingUser} className="flex-1 bg-accent hover:bg-accent/90">
+                {isCreatingUser ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                Create User
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit User Dialog */}
+      <Dialog open={showEditUserDialog} onOpenChange={setShowEditUserDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="font-headline text-xl uppercase tracking-tighter">Edit User</DialogTitle>
+            <DialogDescription>Update user information.</DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleUpdateUser} className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="editDisplayName">Full Name</Label>
+              <Input
+                id="editDisplayName"
+                value={userForm.displayName}
+                onChange={(e) => setUserForm({ ...userForm, displayName: e.target.value })}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="editEmail">Email</Label>
+              <Input
+                id="editEmail"
+                type="email"
+                value={userForm.email}
+                onChange={(e) => setUserForm({ ...userForm, email: e.target.value })}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="editRole">Role</Label>
+              <select
+                id="editRole"
+                value={userForm.role}
+                onChange={(e) => setUserForm({ ...userForm, role: e.target.value as 'student' | 'teacher' | 'admin' })}
+                className="flex h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                <option value="student">Student</option>
+                <option value="teacher">Teacher</option>
+                <option value="admin">Admin</option>
+              </select>
+            </div>
+            <div className="flex gap-2 pt-2">
+              <Button type="button" variant="outline" onClick={() => setShowEditUserDialog(false)} className="flex-1">
+                Cancel
+              </Button>
+              <Button type="submit" disabled={isUpdatingUser} className="flex-1 bg-accent hover:bg-accent/90">
+                {isUpdatingUser ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                Update User
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Approve Teacher Dialog */}
+      <Dialog open={showApproveTeacherDialog} onOpenChange={setShowApproveTeacherDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="font-headline text-xl uppercase tracking-tighter">Approve Teacher Application</DialogTitle>
+            <DialogDescription>Create account and send login credentials to the applicant.</DialogDescription>
+          </DialogHeader>
+          <form onSubmit={(e) => {
+            e.preventDefault();
+            if (selectedApplication) {
+              handleApproveTeacher(
+                selectedApplication.id,
+                userForm.email,
+                userForm.displayName,
+                userForm.password,
+                selectedApplication.uid ?? selectedApplication.userId
+              );
+            }
+          }} className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="approveDisplayName">Full Name</Label>
+              <Input
+                id="approveDisplayName"
+                value={userForm.displayName}
+                onChange={(e) => setUserForm({ ...userForm, displayName: e.target.value })}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="approveEmail">Email</Label>
+              <Input
+                id="approveEmail"
+                type="email"
+                value={userForm.email}
+                onChange={(e) => setUserForm({ ...userForm, email: e.target.value })}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="approvePassword">Password</Label>
+              <Input
+                id="approvePassword"
+                type="password"
+                value={userForm.password}
+                onChange={(e) => setUserForm({ ...userForm, password: e.target.value })}
+                required
+                placeholder="Enter a secure password"
+              />
+              <p className="text-xs text-muted-foreground">This password will be sent to the teacher via email.</p>
+            </div>
+            <div className="flex gap-2 pt-2">
+              <Button type="button" variant="outline" onClick={() => setShowApproveTeacherDialog(false)} className="flex-1">
+                Cancel
+              </Button>
+              <Button type="submit" disabled={isApprovingTeacher} className="flex-1 bg-green-600 hover:bg-green-700">
+                {isApprovingTeacher ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                Approve & Send Credentials
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

@@ -108,6 +108,11 @@ export async function signUpUser(
   name: string,
   role: UserRole = 'student'
 ) {
+  // Only students can self-register. Teachers and admins are created by admin.
+  if (role !== 'student') {
+    return { success: false, error: 'Only student accounts can be self-registered. Contact an administrator for teacher or admin access.' };
+  }
+
   try {
     const normalizedEmail = email.toLowerCase().trim();
     const userCredential = await createUserWithEmailAndPassword(
@@ -129,9 +134,6 @@ export async function signUpUser(
       if (teacherEmailDoc.exists()) {
         finalRole = 'teacher';
         isApproved = true;
-      } else if (role === 'teacher') {
-        finalRole = 'teacher';
-        isApproved = false;
       }
     }
 

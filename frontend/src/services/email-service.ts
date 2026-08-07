@@ -10,6 +10,7 @@
 export type EmailTemplate =
   | 'teacher_approved'
   | 'teacher_rejected'
+  | 'teacher_setup'
   | 'enrollment_confirmed'
   | 'course_published'
   | 'assignment_graded'
@@ -40,6 +41,8 @@ function buildSubject(template: EmailTemplate, data: Record<string, any>): strin
       return 'Your Fusion8 Instructor Application — Approved';
     case 'teacher_rejected':
       return 'Your Fusion8 Instructor Application — Update';
+    case 'teacher_setup':
+      return 'Set up your Fusion8 Instructor Account';
     case 'enrollment_confirmed':
       return `You're enrolled in ${data.courseTitle}`;
     case 'course_published':
@@ -122,9 +125,19 @@ function buildHtmlBody(template: EmailTemplate, data: Record<string, any>): stri
         ${p(`Dear ${data.name},`)}
         ${p('Your Fusion8 instructor application has been reviewed and approved. You now have full access to the Instructor Portal, where you can create courses, manage your curriculum, and connect with students.')}
         <div style="background: #F9FAFB; border: 1px solid #E5E7EB; border-radius: 8px; padding: 20px; margin: 20px 0;">
-          <strong style="display: block; margin-bottom: 8px; color: #0A0A0A;">Your Matricule ID</strong>
-          <span style="font-family: monospace; font-size: 18px; color: ${accentColor}; font-weight: 700;">${data.matricule ?? 'Assigned upon first login'}</span>
+          <strong style="display: block; margin-bottom: 8px; color: #0A0A0A;">Your Login Credentials</strong>
+          <div style="margin-bottom: 12px;">
+            <span style="display: block; font-size: 12px; color: #6B7280; margin-bottom: 4px;">Email:</span>
+            <span style="font-family: monospace; font-size: 14px; color: #0A0A0A;">${data.email}</span>
+          </div>
+          <div>
+            <span style="display: block; font-size: 12px; color: #6B7280; margin-bottom: 4px;">Password:</span>
+            <span style="font-family: monospace; font-size: 18px; color: ${accentColor}; font-weight: 700;">${data.password}</span>
+          </div>
         </div>
+        <p style="font-size: 13px; color: #6B7280; background: #FEF3C7; padding: 12px; border-radius: 6px; margin: 16px 0;">
+          <strong>⚠️ Important:</strong> Please change your password after your first login for security.
+        </p>
         ${btn('Access Instructor Portal', 'https://fusion8.tech/teacher/dashboard')}
       `);
 
@@ -136,6 +149,21 @@ function buildHtmlBody(template: EmailTemplate, data: Record<string, any>): stri
         ${data.reason ? `<div style="background: #FEF2F2; border-left: 3px solid ${accentColor}; padding: 16px 20px; margin: 20px 0;"><strong>Feedback:</strong> ${data.reason}</div>` : ''}
         ${p('You are welcome to re-apply in the future. If you have questions, please contact our team.')}
         ${btn('Contact Support', 'mailto:support@fusion8.tech')}
+      `);
+
+    case 'teacher_setup':
+      return wrap(`
+        ${badge('Instructor Account Created')}
+        <br/><br/>
+        ${h1('Your Fusion8 Instructor Account is Ready')}
+        ${p(`Dear ${data.displayName},`)}
+        ${p('An administrator has created an instructor account for you on the Fusion8 platform. To get started, you need to set your password.')}
+        <div style="background: #F9FAFB; border: 1px solid #E5E7EB; border-radius: 8px; padding: 20px; margin: 20px 0;">
+          <strong style="display: block; margin-bottom: 8px; color: #0A0A0A;">Email:</strong> ${data.email}
+        </div>
+        ${btn('Set Your Password', String(data.setupLink))}
+        <br/><br/>
+        ${p('Once you set your password, you will have full access to the Instructor Portal where you can create courses and manage your curriculum.')}
       `);
 
     case 'enrollment_confirmed':

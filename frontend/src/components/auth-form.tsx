@@ -61,6 +61,7 @@ export function AuthForm() {
         toast({ title: "Welcome back!", description: "Accessing your secure workspace..." });
         const target = returnTo || `/${result.role}/dashboard`;
         router.push(target);
+        // Keep loading state active - the login page will handle the redirect
       } else {
         const errorMsg = (result as any).error;
         if (errorMsg.includes('auth/popup-blocked') || errorMsg.includes('popup')) {
@@ -126,6 +127,7 @@ export function AuthForm() {
           } else {
             toast({ title: "Account Created", description: `Welcome to Fusion8 as a ${values.role}.` });
             router.push(returnTo || `/${result.role}/dashboard`);
+            // Keep loading state active - the login page will handle the redirect
           }
         } else {
           toast({ variant: "destructive", title: "Registration failed", description: (result as any).error });
@@ -136,6 +138,7 @@ export function AuthForm() {
         if (result.success) {
           toast({ title: "Identity Verified", description: `Welcome back, ${result.role}.` });
           router.push(returnTo || `/${result.role}/dashboard`);
+          // Keep loading state active - the login page will handle the redirect
         } else {
           const errMsg = (result as any).error as string;
           // Detect email-not-verified error and offer resend
